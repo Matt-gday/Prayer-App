@@ -53,6 +53,262 @@
       background: rgba(128,128,128,0.3);
       border-radius: 3px;
     }
+    
+    /* Burger menu */
+    .burger-menu {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top));
+      left: max(16px, env(safe-area-inset-left));
+      z-index: 1000;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      background: rgba(250,247,242,0.95);
+      border: 1px solid #D4C8B8;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(90,70,50,0.1);
+    }
+    .burger-menu span {
+      width: 18px;
+      height: 2px;
+      background: #6B5D4F;
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+    .burger-menu.open span:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+    .burger-menu.open span:nth-child(2) {
+      opacity: 0;
+    }
+    .burger-menu.open span:nth-child(3) {
+      transform: rotate(-45deg) translate(5px, -5px);
+    }
+    
+    /* Menu overlay */
+    .menu-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .menu-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    /* Menu panel */
+    .menu-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 280px;
+      max-width: 85vw;
+      background: linear-gradient(180deg, #FAF7F2 0%, #F5EEE4 100%);
+      z-index: 1001;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+      padding: max(60px, env(safe-area-inset-top)) 20px 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .menu-panel.open {
+      transform: translateX(0);
+    }
+    .menu-panel h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #3D352C;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #D4C8B8;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      margin-bottom: 6px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #3D352C;
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+    .menu-item:hover {
+      background: rgba(184,122,74,0.1);
+    }
+    .menu-item-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: #6B5D4F;
+      border: 1.5px solid #8C7B6A;
+      border-radius: 50%;
+    }
+    .menu-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      margin-bottom: 6px;
+      border-radius: 12px;
+      color: #3D352C;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .menu-toggle-switch {
+      width: 48px;
+      height: 28px;
+      background: #DED4C6;
+      border-radius: 14px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .menu-toggle-switch.active {
+      background: linear-gradient(135deg, #6DB88A 0%, #4A8862 100%);
+    }
+    .menu-toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+    }
+    .menu-toggle-switch.active::after {
+      transform: translateX(20px);
+    }
+    
+    /* Demo mode indicator */
+    .demo-indicator {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top));
+      right: max(16px, env(safe-area-inset-right));
+      z-index: 998;
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #D49A5A 0%, #A66830 100%);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(184,122,74,0.3);
+    }
+    
+    /* Card scroll indicator */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8C7B6A;
+      font-size: 14px;
+      opacity: 0.7;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+    }
+    .scroll-indicator.hidden {
+      opacity: 0;
+    }
+    
+    /* Help/Manual accordion */
+    .help-section {
+      margin-bottom: 8px;
+    }
+    .help-accordion {
+      background: linear-gradient(145deg, #FFFFFF 0%, #F5F0E8 100%);
+      border: 1px solid #D4C8B8;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(90,70,50,0.08);
+    }
+    .help-accordion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s ease;
+    }
+    .help-accordion-header:hover {
+      background: rgba(184,122,74,0.05);
+    }
+    .help-accordion-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #3D352C;
+    }
+    .help-accordion-icon {
+      color: #8C7B6A;
+      font-size: 14px;
+      transition: transform 0.3s ease;
+    }
+    .help-accordion-icon.open {
+      transform: rotate(180deg);
+    }
+    .help-accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .help-accordion-content.open {
+      max-height: 500px;
+    }
+    .help-accordion-body {
+      padding: 0 16px 16px;
+      font-size: 14px;
+      color: #6B5D4F;
+      line-height: 1.6;
+    }
+    .help-accordion-body p {
+      margin-bottom: 8px;
+    }
+    .help-accordion-body ul {
+      margin-left: 16px;
+      margin-bottom: 8px;
+    }
+    .help-accordion-body li {
+      margin-bottom: 4px;
+    }
+    .help-tip {
+      background: rgba(184,122,74,0.1);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-style: italic;
+      margin-top: 8px;
+    }
+    
     /* App container - full width on mobile/tablet, constrained only on desktop */
     .app-container {
       max-width: none;
@@ -223,9 +479,6 @@
     .home-header-row {
       display: none;
     }
-    .home-demo-portrait {
-      display: block;
-    }
     /* Landscape mode - two columns */
     @media (orientation: landscape) and (max-width: 1023px) {
       .home-content {
@@ -289,9 +542,6 @@
       }
 .home-spacer-top, .home-spacer-bottom, .home-portrait-divider {
          display: none;
-       }
-       .home-demo-portrait {
-         display: none !important;
        }
        .home-header-row {
          display: flex !important;
@@ -574,7 +824,7 @@
       }));
 
       const demoCards = [
-        { id: 'c1', name: 'Mitchells', peopleIds: ['p1', 'p2', 'p3', 'p4'], frequency: 'every-2-3-days', prayerPoint: 'Family unity and health', includeUnnamedChildren: false, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        { id: 'c1', name: 'Mitchells', peopleIds: ['p1', 'p2', 'p3', 'p4'], frequency: 'daily', prayerPoint: 'Family unity and health', includeUnnamedChildren: false, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
         { id: 'c2', name: 'Victoria Greene', peopleIds: ['p5'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
         { id: 'c3', name: 'David Chen', peopleIds: ['p6'], frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
         { id: 'c4', name: 'Tuesday Gaming', peopleIds: ['p7', 'p8', 'p9'], frequency: 'every-2-3-days', prayerPoint: '', includeUnnamedChildren: false, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
@@ -624,6 +874,12 @@
       const [groupStep, setGroupStep] = useState(1);
       const [checkboxOverrides, setCheckboxOverrides] = useState({});
       const [modal, setModal] = useState(null);
+      const [menuOpen, setMenuOpen] = useState(false);
+      const [demoMode, setDemoMode] = useState(() => getStored('prayerApp_demoMode', false));
+      const [helpOpen, setHelpOpen] = useState(false);
+      const [openAccordions, setOpenAccordions] = useState({});
+      const [cardScrollState, setCardScrollState] = useState({ canScrollDown: false, canScrollUp: false });
+      const cardScrollRef = React.useRef(null);
 
       // "Morning Prayer" - warm parchment, golden hour glow
       const colors = {
@@ -712,7 +968,6 @@
         sortOptionActive: { background: colors.primary + '20', color: colors.primary, fontWeight: '600' },
         reverseBtn: { width: '42px', height: '42px', fontSize: '16px', background: colors.secondary, border: `1px solid ${colors.border}`, borderRadius: '10px', color: colors.text, fontWeight: '500', fontFamily: 'inherit', outline: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
         frequencyHeading: { fontSize: '11px', fontWeight: '700', color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: '1px', padding: '16px 0 8px 4px' },
-        demoButton: { position: 'absolute', top: '12px', right: '16px', padding: '4px 8px', fontSize: '11px', fontWeight: '500', background: colors.secondary, color: colors.textTertiary, border: `1px solid ${colors.border}`, borderRadius: '6px', cursor: 'pointer', fontFamily: 'inherit' },
         modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px', boxSizing: 'border-box' },
         modalContent: { background: colors.cardBgGradient || colors.cardBg, borderRadius: '20px', padding: '24px', maxWidth: '340px', width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,0.4)', border: `1px solid ${colors.border}` },
         modalTitle: { fontSize: '18px', fontWeight: '700', marginBottom: '12px', textAlign: 'center', color: colors.text },
@@ -758,6 +1013,39 @@
         setPeople(dp); setCards(dc); setSession(null);
         localStorage.removeItem('prayerApp_session');
       };
+      
+      const toggleDemoMode = () => {
+        if (demoMode) {
+          // Turn off demo mode - clear data
+          setPeople([]);
+          setCards([]);
+          setSession(null);
+          setDemoMode(false);
+          localStorage.setItem('prayerApp_demoMode', 'false');
+        } else {
+          // Turn on demo mode - load demo data
+          loadDemoData();
+          setDemoMode(true);
+          localStorage.setItem('prayerApp_demoMode', 'true');
+        }
+        setMenuOpen(false);
+      };
+      
+      const toggleAccordion = (id) => {
+        setOpenAccordions(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+      
+      const checkCardScroll = () => {
+        const el = cardScrollRef.current;
+        if (!el) return;
+        const canScrollDown = el.scrollHeight > el.clientHeight && el.scrollTop < el.scrollHeight - el.clientHeight - 5;
+        const canScrollUp = el.scrollTop > 5;
+        setCardScrollState({ canScrollDown, canScrollUp });
+      };
+      
+      React.useEffect(() => {
+        checkCardScroll();
+      }, [currentCardIndex, screen]);
 
       const isNewDay = useCallback(() => !session || session.dateStarted !== getToday(), [session]);
       const getLastPrayedDate = useCallback((card) => {
@@ -1399,6 +1687,161 @@
           </div>
         );
       };
+      
+      const renderMenu = () => (
+        <>
+          <div className={`menu-overlay ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(false)} />
+          <div className={`menu-panel ${menuOpen ? 'open' : ''}`}>
+            <h2>Menu</h2>
+            <div className="menu-toggle">
+              <span style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <span className="menu-item-icon">◉</span>
+                Demo Mode
+              </span>
+              <div className={`menu-toggle-switch ${demoMode ? 'active' : ''}`} onClick={toggleDemoMode} />
+            </div>
+            <button className="menu-item" onClick={() => { setHelpOpen(true); setMenuOpen(false); }}>
+              <span className="menu-item-icon">?</span>
+              How to Use
+            </button>
+            <div style={{ flex: 1 }} />
+            <div style={{ padding: '16px', borderTop: `1px solid ${colors.border}`, marginTop: '16px', fontSize: '12px', color: colors.textTertiary, textAlign: 'center' }}>
+              Prayer Companion v1.0
+            </div>
+          </div>
+          <button className={`burger-menu ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(!menuOpen)}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </>
+      );
+      
+      const renderHelp = () => {
+        const helpSections = [
+          {
+            id: 'getting-started',
+            title: 'Getting Started',
+            content: (
+              <>
+                <p>Welcome to Prayer Companion! This app helps you organize and track your daily prayers for the people you care about.</p>
+                <ul>
+                  <li><strong>Add people</strong> you want to pray for</li>
+                  <li><strong>Create groups</strong> for families or communities</li>
+                  <li><strong>Set prayer frequencies</strong> (daily, weekly, monthly)</li>
+                  <li><strong>Track your prayers</strong> with checkboxes and history</li>
+                </ul>
+                <div className="help-tip">Tip: Use Demo Mode from the menu to explore the app with sample data!</div>
+              </>
+            )
+          },
+          {
+            id: 'adding-people',
+            title: 'Adding People',
+            content: (
+              <>
+                <p>Tap <strong>"Add Person"</strong> on the home screen to add someone to your prayer list.</p>
+                <ul>
+                  <li><strong>Name:</strong> Enter their first and last name</li>
+                  <li><strong>Organisation:</strong> Optional - their church, workplace, etc.</li>
+                  <li><strong>Prayer Points:</strong> Specific things to pray for (one per line)</li>
+                  <li><strong>Frequency:</strong> How often to pray for them</li>
+                  <li><strong>Is Child:</strong> Mark if they're a child (affects display)</li>
+                </ul>
+              </>
+            )
+          },
+          {
+            id: 'creating-groups',
+            title: 'Creating Groups',
+            content: (
+              <>
+                <p>Groups let you pray for multiple people together, like a family.</p>
+                <ul>
+                  <li>Tap <strong>"Create Group"</strong> and give it a name</li>
+                  <li>Select the people to include</li>
+                  <li>Choose if each person has an individual checkbox or one for all</li>
+                  <li><strong>"Include unnamed children"</strong> adds a catch-all for kids you haven't added individually</li>
+                </ul>
+                <div className="help-tip">Tip: People in a group won't appear as separate cards - they'll only show in the group.</div>
+              </>
+            )
+          },
+          {
+            id: 'prayer-frequencies',
+            title: 'Prayer Frequencies',
+            content: (
+              <>
+                <p>Choose how often someone appears in your prayers:</p>
+                <ul>
+                  <li><strong>Daily:</strong> Every day</li>
+                  <li><strong>Semi-daily:</strong> Every other day</li>
+                  <li><strong>Every 2-3 days:</strong> Spreads out evenly across the week</li>
+                  <li><strong>Weekly:</strong> Once a week, distributed evenly</li>
+                  <li><strong>Monthly:</strong> Once a month, spread across the month</li>
+                </ul>
+                <p>Weekly and monthly people are automatically distributed so you don't have everyone on the same day.</p>
+              </>
+            )
+          },
+          {
+            id: 'praying',
+            title: 'Daily Prayer Time',
+            content: (
+              <>
+                <p>Tap <strong>"Start Praying"</strong> to begin your daily prayer session.</p>
+                <ul>
+                  <li><strong>Swipe left/right</strong> or use arrow buttons to navigate cards</li>
+                  <li><strong>Tap checkboxes</strong> to mark prayers as complete</li>
+                  <li>Completed cards are removed from rotation when you swipe away</li>
+                  <li>Tap <strong>"List"</strong> to see all today's prayers at once</li>
+                </ul>
+                <div className="help-tip">Tip: Your progress is saved automatically - you can close and return anytime!</div>
+              </>
+            )
+          },
+          {
+            id: 'managing',
+            title: 'Managing & History',
+            content: (
+              <>
+                <p>Use the bottom navigation to access:</p>
+                <ul>
+                  <li><strong>Manage:</strong> Edit, delete, or deactivate people and groups</li>
+                  <li><strong>History:</strong> View your prayer history by person or group</li>
+                </ul>
+                <p>Tap any person or group to see details. In History, you can view a calendar showing which days you prayed and what prayer points were used.</p>
+              </>
+            )
+          }
+        ];
+        
+        return (
+          <div className="app-container" style={styles.container}>
+            <div className="app-header">
+              <button style={styles.btnText} onClick={() => setHelpOpen(false)}>← Back</button>
+            </div>
+            <div style={{ fontSize: '22px', fontWeight: '700', marginBottom: '20px' }}>How to Use</div>
+            <div style={{ maxHeight: 'calc(100vh - 140px)', overflowY: 'auto', paddingBottom: '20px' }}>
+              {helpSections.map(section => (
+                <div key={section.id} className="help-section">
+                  <div className="help-accordion">
+                    <div className="help-accordion-header" onClick={() => toggleAccordion(section.id)}>
+                      <span className="help-accordion-title">{section.title}</span>
+                      <span className={`help-accordion-icon ${openAccordions[section.id] ? 'open' : ''}`}>▼</span>
+                    </div>
+                    <div className={`help-accordion-content ${openAccordions[section.id] ? 'open' : ''}`}>
+                      <div className="help-accordion-body">
+                        {section.content}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      };
 
       const renderHome = () => {
         const showContinue = session && !isNewDay();
@@ -1407,17 +1850,13 @@
         return (
           <div className="app-container" style={{ ...styles.container, position: 'relative', display: 'flex', flexDirection: 'column', height: '100vh', paddingBottom: '60px', overflow: 'hidden' }}>
             
-            {/* Header row for landscape - greeting left, demo right */}
+            {/* Header row for landscape - greeting left */}
             <div className="home-header-row" style={{ display: 'none', paddingTop: '4px', marginBottom: '8px' }}>
               <div className="home-greeting-text">
                 <span style={{ fontSize: '20px', fontWeight: '700', color: colors.text }}>{showContinue ? 'Welcome back' : getGreeting('Matt')}</span>
                 <span style={{ fontSize: '14px', color: colors.textSecondary }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</span>
               </div>
-              <button style={{ ...styles.demoButton, position: 'static' }} onClick={loadDemoData}>Demo</button>
             </div>
-            
-            {/* Demo button for portrait (absolute positioned) */}
-            <button className="home-demo-portrait" style={styles.demoButton} onClick={loadDemoData}>Demo</button>
             
             {/* Greeting for portrait */}
             <div className="home-greeting" style={{ textAlign: 'center', paddingTop: '12px', marginBottom: '8px' }}>
@@ -1615,13 +2054,20 @@
               <button style={styles.btnText} onClick={() => setSession(s => ({ ...s, currentView: 'list' }))}>List</button>
             </div>
             <div 
+              ref={cardScrollRef}
               className={`prayer-card-area ${slideDirection === 'right' ? 'card-slide-right' : slideDirection === 'left' ? 'card-slide-left' : ''}`}
               onTouchStart={handleTouchStart} 
               onTouchEnd={handleTouchEnd}
-              style={{ touchAction: 'pan-y' }}
+              onScroll={checkCardScroll}
+              style={{ touchAction: 'pan-y', position: 'relative' }}
               key={cid}
             >
               {renderPrayerCard(cid, true)}
+              {(cardScrollState.canScrollDown || cardScrollState.canScrollUp) && (
+                <div className={`scroll-indicator`} style={{ position: 'sticky', bottom: 0, marginLeft: 'auto', marginTop: '-24px' }}>
+                  {cardScrollState.canScrollDown ? '▼' : '▲'}
+                </div>
+              )}
             </div>
             <div className="prayer-nav-area">
               <div style={styles.swipeButtons}>
@@ -2354,17 +2800,31 @@
         );
       };
 
-      if (editingPerson) return <>{renderEditPerson()}{renderModal()}</>;
-      if (editingCard) return <>{renderEditCard()}{renderModal()}</>;
-      if (viewingStats) return renderStats();
-      switch (screen) {
-        case 'home': return renderHome();
-        case 'prayer': return renderPrayer();
-        case 'manage': return renderManage();
-        case 'stats': return renderStats();
-        case 'createGroup': return renderCreateGroup();
-        default: return renderHome();
-      }
+      // Help screen takes priority
+      if (helpOpen) return <>{renderHelp()}{renderMenu()}</>;
+      
+      if (editingPerson) return <>{renderEditPerson()}{renderModal()}{renderMenu()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
+      if (editingCard) return <>{renderEditCard()}{renderModal()}{renderMenu()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
+      if (viewingStats) return <>{renderStats()}{renderMenu()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
+      
+      const mainContent = (() => {
+        switch (screen) {
+          case 'home': return renderHome();
+          case 'prayer': return renderPrayer();
+          case 'manage': return renderManage();
+          case 'stats': return renderStats();
+          case 'createGroup': return renderCreateGroup();
+          default: return renderHome();
+        }
+      })();
+      
+      return (
+        <>
+          {mainContent}
+          {renderMenu()}
+          {demoMode && <div className="demo-indicator">Demo Mode</div>}
+        </>
+      );
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
