@@ -606,14 +606,15 @@
        }
      }
      
-     /* Reduce header spacing in landscape */
-     .app-header {
-       display: flex;
-       justify-content: space-between;
-       align-items: center;
-       margin-bottom: 16px;
-       min-height: 44px;
-     }
+/* Reduce header spacing in landscape */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      min-height: 44px;
+      padding-left: 44px; /* Space for burger menu */
+    }
      @media (orientation: landscape) and (max-width: 1023px) {
        .app-header {
          margin-bottom: 6px;
@@ -1851,7 +1852,7 @@
           <div className="app-container" style={{ ...styles.container, position: 'relative', display: 'flex', flexDirection: 'column', height: '100vh', paddingBottom: '60px', overflow: 'hidden' }}>
             
             {/* Header row for landscape - greeting left */}
-            <div className="home-header-row" style={{ display: 'none', paddingTop: '4px', marginBottom: '8px' }}>
+            <div className="home-header-row" style={{ display: 'none', paddingTop: '4px', marginBottom: '8px', paddingLeft: '44px', paddingRight: '90px' }}>
               <div className="home-greeting-text">
                 <span style={{ fontSize: '20px', fontWeight: '700', color: colors.text }}>{showContinue ? 'Welcome back' : getGreeting('Matt')}</span>
                 <span style={{ fontSize: '14px', color: colors.textSecondary }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</span>
@@ -1859,7 +1860,7 @@
             </div>
             
             {/* Greeting for portrait */}
-            <div className="home-greeting" style={{ textAlign: 'center', paddingTop: '12px', marginBottom: '8px' }}>
+            <div className="home-greeting" style={{ textAlign: 'center', paddingTop: '12px', marginBottom: '8px', paddingLeft: '44px', paddingRight: '90px' }}>
               <div className="home-welcome" style={{ ...styles.greeting, fontSize: '24px', marginTop: 0, marginBottom: '2px' }}>{showContinue ? 'Welcome back' : getGreeting('Matt')}</div>
               <div className="home-subtext" style={{ ...styles.subGreeting, fontSize: '14px', marginBottom: '0' }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
             </div>
