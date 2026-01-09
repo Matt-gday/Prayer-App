@@ -149,6 +149,49 @@
         font-size: clamp(18px, 2.2vw, 24px) !important;
       }
     }
+    
+    /* Prayer view - fit within viewport with scrollable card area */
+    .prayer-view-container {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh; /* Dynamic viewport height - accounts for mobile browser UI */
+      height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      max-height: 100dvh;
+      padding: 16px;
+      padding-top: max(12px, env(safe-area-inset-top));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .prayer-card-area {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
+    }
+    .prayer-card-area > div:first-child {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .prayer-nav-area {
+      flex-shrink: 0;
+      padding-top: 8px;
+    }
+    /* Desktop - constrain prayer view width */
+    @media (min-width: 1200px) {
+      .prayer-view-container {
+        max-width: 540px;
+      }
+    }
+    @media (min-width: 1400px) {
+      .prayer-view-container {
+        max-width: 600px;
+      }
+    }
+    
     /* Home page landscape layout */
     .home-content {
       display: flex;
@@ -620,7 +663,7 @@
         btnSmall: { ...baseBtn, padding: '8px 14px', fontSize: '13px', background: colors.secondaryGradient, color: colors.textSecondary, borderRadius: '10px', border: `1px solid ${colors.border}` },
         buttonRow: { display: 'flex', gap: '12px', marginBottom: '12px' },
         card: { background: colors.cardBgGradient || colors.cardBg, borderRadius: '20px', padding: '20px', marginBottom: '12px', boxShadow: colors.cardShadow, border: `1px solid ${colors.border}` },
-        cardFullScreen: { minHeight: 'calc(100vh - 180px)', display: 'flex', flexDirection: 'column', marginBottom: '0' },
+        cardFullScreen: { flex: 1, display: 'flex', flexDirection: 'column', marginBottom: '0', minHeight: 0 },
         listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: colors.cardBgGradient || colors.cardBg, borderRadius: '12px', marginBottom: '6px', cursor: 'pointer', boxShadow: colors.cardShadow, border: `1px solid ${colors.border}` },
         listItemName: { fontSize: '16px', fontWeight: '500' },
         listItemMeta: { fontSize: '15px', color: colors.textSecondary, fontWeight: '500' },
@@ -1566,25 +1609,27 @@
         }
         
         return (
-          <div className="app-container" style={styles.container}>
-            <div className="app-header">
+          <div className="prayer-view-container" style={{ fontFamily: "'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif", background: colors.bgGradient, color: colors.text, margin: '0 auto', maxWidth: 'none', width: '100%' }}>
+            <div className="app-header" style={{ flexShrink: 0 }}>
               <button style={styles.btnText} onClick={() => setScreen('home')}>← Home</button>
               <button style={styles.btnText} onClick={() => setSession(s => ({ ...s, currentView: 'list' }))}>List</button>
             </div>
             <div 
-              className={slideDirection === 'right' ? 'card-slide-right' : slideDirection === 'left' ? 'card-slide-left' : ''}
+              className={`prayer-card-area ${slideDirection === 'right' ? 'card-slide-right' : slideDirection === 'left' ? 'card-slide-left' : ''}`}
               onTouchStart={handleTouchStart} 
               onTouchEnd={handleTouchEnd}
-              style={{ touchAction: 'pan-y', overflow: 'hidden' }}
+              style={{ touchAction: 'pan-y' }}
               key={cid}
             >
               {renderPrayerCard(cid, true)}
             </div>
-            <div style={styles.swipeButtons}>
-              <button style={noMoreIncomplete ? disabledBtnStyle : styles.swipeButton} onClick={noMoreIncomplete ? undefined : swipePrev} disabled={noMoreIncomplete}>‹</button>
-              <button style={noMoreIncomplete ? disabledBtnStyle : styles.swipeButton} onClick={noMoreIncomplete ? undefined : swipeNext} disabled={noMoreIncomplete}>›</button>
+            <div className="prayer-nav-area">
+              <div style={styles.swipeButtons}>
+                <button style={noMoreIncomplete ? disabledBtnStyle : styles.swipeButton} onClick={noMoreIncomplete ? undefined : swipePrev} disabled={noMoreIncomplete}>‹</button>
+                <button style={noMoreIncomplete ? disabledBtnStyle : styles.swipeButton} onClick={noMoreIncomplete ? undefined : swipeNext} disabled={noMoreIncomplete}>›</button>
+              </div>
+              <div style={styles.swipeHint}>{hintText} · swipe or use arrows</div>
             </div>
-            <div style={styles.swipeHint}>{hintText} · swipe or use arrows</div>
           </div>
         );
       };
