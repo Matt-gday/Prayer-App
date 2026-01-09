@@ -26,18 +26,19 @@
     html, body, #root {
       height: 100%;
       width: 100%;
+      /* Match app gradient everywhere to avoid white edges */
+      background: linear-gradient(160deg, #F5EEE4 0%, #E8DECE 50%, #EDE4D8 100%);
+      background-attachment: fixed;
     }
     body {
       font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      /* Match the app container gradient for seamless background */
-      background: linear-gradient(160deg, #F5EEE4 0%, #E8DECE 50%, #EDE4D8 100%);
-      background-attachment: fixed;
       /* Safe areas for notched phones and Safari bars */
       padding-top: env(safe-area-inset-top);
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
+      padding-bottom: env(safe-area-inset-bottom);
     }
     input, textarea, select, button {
       font-family: inherit;
@@ -54,11 +55,8 @@
       border-radius: 3px;
     }
     
-    /* Info button (homepage only) */
-    .info-button {
-      position: absolute;
-      top: 12px;
-      left: 16px;
+    /* Home page circular buttons - unified style */
+    .home-circle-btn {
       width: 28px;
       height: 28px;
       display: flex;
@@ -76,44 +74,22 @@
       box-shadow: 0 2px 6px rgba(90,70,50,0.1);
       transition: all 0.2s ease;
     }
-    .info-button:hover {
+    .home-circle-btn:hover {
       background: #FAF7F2;
       border-color: #B87A4A;
       color: #B87A4A;
     }
-    
-    /* Demo toggle button (homepage only) */
-    .demo-toggle {
-      position: absolute;
-      top: 12px;
-      right: 16px;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(250,247,242,0.95);
-      border: 1.5px solid #D4C8B8;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      font-style: italic;
-      font-family: Georgia, serif;
-      color: #6B5D4F;
-      box-shadow: 0 2px 6px rgba(90,70,50,0.1);
-      transition: all 0.2s ease;
-    }
-    .demo-toggle:hover {
-      background: #FAF7F2;
-      border-color: #B87A4A;
-      color: #B87A4A;
-    }
-    .demo-toggle.active {
+    .home-circle-btn.active {
       background: linear-gradient(135deg, #D49A5A 0%, #A66830 100%);
       color: white;
       border-color: #A66830;
       box-shadow: 0 2px 8px rgba(184,122,74,0.3);
+    }
+    /* Symbol buttons don't need italic, lighter weight */
+    .home-circle-btn.symbol {
+      font-style: normal;
+      font-family: inherit;
+      font-weight: 400;
     }
     
     /* Onboarding screen */
@@ -217,28 +193,6 @@
     }
     .edit-name-btn:hover {
       opacity: 1;
-      color: #B87A4A;
-    }
-    
-    /* Data sync button */
-    .data-sync-btn {
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(250,247,242,0.95);
-      border: 1.5px solid #D4C8B8;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 14px;
-      color: #6B5D4F;
-      box-shadow: 0 2px 6px rgba(90,70,50,0.1);
-      transition: all 0.2s ease;
-    }
-    .data-sync-btn:hover {
-      background: #FAF7F2;
-      border-color: #B87A4A;
       color: #B87A4A;
     }
     
@@ -346,23 +300,6 @@
       color: #3D352C;
       margin-bottom: 16px;
       text-align: center;
-    }
-    
-    /* Demo mode indicator (for sub-pages) */
-    .demo-indicator {
-      position: fixed;
-      top: max(12px, env(safe-area-inset-top));
-      right: max(16px, env(safe-area-inset-right));
-      z-index: 998;
-      padding: 6px 12px;
-      background: linear-gradient(135deg, #D49A5A 0%, #A66830 100%);
-      color: white;
-      font-size: 11px;
-      font-weight: 600;
-      border-radius: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      box-shadow: 0 2px 8px rgba(184,122,74,0.3);
     }
     
     /* Card scroll indicator */
@@ -756,7 +693,13 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
-      min-height: 44px;
+      min-height: 28px;
+    }
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-align: center;
     }
      @media (orientation: landscape) and (max-width: 1023px) {
        .app-header {
@@ -1012,6 +955,7 @@
       const [historyTab, setHistoryTab] = useState('people');
       const [selectedHistoryDate, setSelectedHistoryDate] = useState(null);
       const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+      const [freqDropdownOpen, setFreqDropdownOpen] = useState(false);
       const [personForm, setPersonForm] = useState({ firstName: '', lastName: '', organisation: '', prayerPoint: '', frequency: 'daily', isChild: false, individualCheckbox: true });
       const [cardForm, setCardForm] = useState({ name: '', frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false });
       const [groupForm, setGroupForm] = useState({ name: '', frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: false });
@@ -1078,15 +1022,15 @@
         listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: colors.cardBgGradient || colors.cardBg, borderRadius: '12px', marginBottom: '6px', cursor: 'pointer', boxShadow: colors.cardShadow, border: `1px solid ${colors.border}` },
         listItemName: { fontSize: '16px', fontWeight: '500' },
         listItemMeta: { fontSize: '15px', color: colors.textSecondary, fontWeight: '500' },
-        input: { width: '100%', padding: '16px 18px', fontSize: '17px', backgroundColor: colors.inputBg, border: `1px solid ${colors.inputBorder || colors.border}`, borderRadius: '14px', color: colors.text, marginBottom: '16px', boxSizing: 'border-box', fontFamily: 'inherit', outline: 'none' },
-        label: { display: 'block', fontSize: '13px', fontWeight: '600', color: colors.textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' },
-        select: { width: '100%', padding: '16px 18px', fontSize: '17px', backgroundColor: colors.inputBg, border: `1px solid ${colors.inputBorder || colors.border}`, borderRadius: '14px', color: colors.text, marginBottom: '16px', boxSizing: 'border-box', fontFamily: 'inherit', appearance: 'none' },
-        toggle: { display: 'flex', gap: '8px', marginBottom: '16px', background: colors.secondaryGradient, borderRadius: '12px', padding: '4px', border: `1px solid ${colors.border}` },
-        toggleOption: { flex: 1, padding: '12px', textAlign: 'center', borderRadius: '10px', cursor: 'pointer', fontSize: '15px', fontWeight: '500', transition: 'all 0.2s ease' },
+        input: { width: '100%', padding: '12px 16px', fontSize: '16px', backgroundColor: colors.inputBg, border: `1px solid ${colors.inputBorder || colors.border}`, borderRadius: '12px', color: colors.text, marginBottom: '12px', boxSizing: 'border-box', fontFamily: 'inherit', outline: 'none' },
+        label: { display: 'block', fontSize: '12px', fontWeight: '600', color: colors.textSecondary, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' },
+        select: { width: '100%', padding: '12px 16px', fontSize: '16px', backgroundColor: colors.inputBg, border: `1px solid ${colors.inputBorder || colors.border}`, borderRadius: '12px', color: colors.text, marginBottom: '12px', boxSizing: 'border-box', fontFamily: 'inherit', appearance: 'none' },
+        toggle: { display: 'flex', gap: '8px', marginBottom: '12px', background: colors.secondaryGradient, borderRadius: '12px', padding: '4px', border: `1px solid ${colors.border}` },
+        toggleOption: { flex: 1, padding: '10px', textAlign: 'center', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', transition: 'all 0.2s ease' },
         toggleActive: { background: colors.primaryGradient, color: colors.primaryText, boxShadow: '0 2px 12px rgba(184,122,74,0.3)' },
         toggleInactive: { backgroundColor: 'transparent', color: colors.textSecondary },
-        tabs: { display: 'flex', marginBottom: '16px', background: colors.secondaryGradient, borderRadius: '12px', padding: '4px', border: `1px solid ${colors.border}` },
-        tab: { flex: 1, padding: '12px', textAlign: 'center', borderRadius: '10px', cursor: 'pointer', fontSize: '15px', fontWeight: '500', border: 'none', fontFamily: 'inherit' },
+        tabs: { display: 'flex', marginBottom: '12px', background: colors.secondaryGradient, borderRadius: '12px', padding: '4px', border: `1px solid ${colors.border}` },
+        tab: { flex: 1, padding: '10px', textAlign: 'center', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', border: 'none', fontFamily: 'inherit' },
         cardHeaderRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' },
         cardTitle: { fontSize: '15px', fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' },
         cardFrequency: { fontSize: '13px', color: colors.textSecondary, background: colors.secondaryGradient, padding: '4px 10px', borderRadius: '8px', fontWeight: '500', border: `1px solid ${colors.border}` },
@@ -1116,7 +1060,7 @@
         subGreeting: { fontSize: '16px', color: colors.textSecondary, textAlign: 'center', marginBottom: '32px' },
         emptyState: { textAlign: 'center', color: colors.textSecondary, padding: '60px 20px', fontSize: '16px', lineHeight: '1.6' },
         sortRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '12px' },
-        sortDropdown: { position: 'relative' },
+        sortDropdown: { position: 'relative', marginBottom: '12px' },
         sortTrigger: { padding: '10px 14px', paddingRight: '32px', fontSize: '14px', background: colors.secondary, border: `1px solid ${colors.border}`, borderRadius: '10px', color: colors.text, fontWeight: '500', fontFamily: 'inherit', outline: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
         sortMenu: { position: 'absolute', top: '100%', left: 0, marginTop: '4px', background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '12px', boxShadow: colors.cardShadow, overflow: 'hidden', zIndex: 100, minWidth: '160px' },
         sortOption: { padding: '12px 16px', fontSize: '14px', color: colors.text, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.15s ease' },
@@ -2131,7 +2075,7 @@
             <div className="app-header">
               <button style={styles.btnText} onClick={() => setHelpOpen(false)}>← Back</button>
             </div>
-            <div style={{ fontSize: '22px', fontWeight: '700', marginBottom: '20px' }}>How to Use</div>
+            <div className="page-title">How to Use</div>
             <div style={{ maxHeight: 'calc(100vh - 140px)', overflowY: 'auto', paddingBottom: '20px' }}>
               {helpSections.map(section => (
                 <div key={section.id} className="help-section">
@@ -2162,9 +2106,9 @@
             
             {/* Top row with info, sync, and demo buttons */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <button className="info-button" style={{ position: 'static' }} onClick={() => setHelpOpen(true)}>i</button>
-              <button className="data-sync-btn" onClick={() => { setDataModalOpen(true); setDataModalStep('main'); }} title="Backup & Restore">⇅</button>
-              <button className={`demo-toggle ${demoMode ? 'active' : ''}`} style={{ position: 'static' }} onClick={toggleDemoMode}>D</button>
+              <button className="home-circle-btn" onClick={() => setHelpOpen(true)} title="How to Use">i</button>
+              <button className="home-circle-btn symbol" onClick={() => { setDataModalOpen(true); setDataModalStep('main'); }} title="Backup & Restore">⇅</button>
+              <button className={`home-circle-btn ${demoMode ? 'active' : ''}`} onClick={toggleDemoMode} title="Demo Mode">D</button>
             </div>
             
             {/* Greeting - now below buttons */}
@@ -2442,7 +2386,7 @@
               <button style={styles.btnText} onClick={() => setScreen('home')}>← Home</button>
               {!allDone && <button style={styles.btnText} onClick={() => setSession(s => ({ ...s, currentView: 'flashcard' }))}>Cards</button>}
             </div>
-            <div style={{ fontSize: '22px', fontWeight: '700', marginBottom: '20px' }}>{allDone ? 'All prayers complete' : "Today's Prayers"}</div>
+            <div className="page-title">{allDone ? 'All prayers complete' : "Today's Prayers"}</div>
             <div className="two-column-grid" style={{ maxHeight: 'calc(100vh - 140px)', overflowY: 'auto', padding: '4px 6px', margin: '0 -6px' }}>
               {session?.todaysList.map(cid => <div key={cid}>{renderPrayerCard(cid, false)}</div>)}
             </div>
@@ -2724,7 +2668,26 @@
             <label style={styles.label}>Last Name</label><input style={styles.input} value={personForm.lastName} onChange={e => setPersonForm({ ...personForm, lastName: e.target.value })} placeholder="Last name" />
             <label style={styles.label}>Organisation / Ministry</label><input style={styles.input} value={personForm.organisation} onChange={e => setPersonForm({ ...personForm, organisation: e.target.value })} placeholder="Optional - e.g. OMF, City Youth" />
             <label style={styles.label}>Prayer Points</label><textarea style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }} value={personForm.prayerPoint} onChange={e => setPersonForm({ ...personForm, prayerPoint: e.target.value })} placeholder="One per line" />
-            <label style={styles.label}>Frequency</label><select style={styles.select} value={personForm.frequency} onChange={e => setPersonForm({ ...personForm, frequency: e.target.value })}><option value="daily">Daily</option><option value="every-2-3-days">Every 2-3 Days</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
+            <label style={styles.label}>Frequency</label>
+            <div style={styles.sortDropdown}>
+              <button type="button" style={styles.sortTrigger} onClick={() => setFreqDropdownOpen(!freqDropdownOpen)}>
+                {{ daily: 'Daily', 'every-2-3-days': 'Every 2-3 Days', weekly: 'Weekly', monthly: 'Monthly' }[personForm.frequency]}
+                <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>▼</span>
+              </button>
+              {freqDropdownOpen && (
+                <>
+                  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setFreqDropdownOpen(false)} />
+                  <div style={styles.sortMenu}>
+                    {[{ value: 'daily', label: 'Daily' }, { value: 'every-2-3-days', label: 'Every 2-3 Days' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }].map(opt => (
+                      <div key={opt.value} style={{ ...styles.sortOption, ...(personForm.frequency === opt.value ? styles.sortOptionActive : {}) }} onClick={() => { setPersonForm({ ...personForm, frequency: opt.value }); setFreqDropdownOpen(false); }}>
+                        <span style={{ width: '16px' }}>{personForm.frequency === opt.value ? '●' : ''}</span>
+                        {opt.label}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <label style={styles.label}>Type</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(!personForm.isChild ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, isChild: false })}>Adult</div><div style={{ ...styles.toggleOption, ...(personForm.isChild ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, isChild: true })}>Child</div></div>
             <label style={styles.label}>Individual checkbox</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(personForm.individualCheckbox ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, individualCheckbox: true })}>Yes</div><div style={{ ...styles.toggleOption, ...(!personForm.individualCheckbox ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, individualCheckbox: false })}>No</div></div>
             {!isNew && <><button style={{ ...styles.btnSecondary, width: '100%', marginTop: '8px' }} onClick={() => { setViewingStats(editingPerson); setEditingPerson(null); }}>View History</button><button style={styles.btnDanger} onClick={del}>Delete</button></>}
@@ -2739,7 +2702,26 @@
           <div className="app-container" style={styles.container}>
             <div className="app-header"><button style={styles.btnText} onClick={() => setEditingCard(null)}>Cancel</button><button style={styles.btnText} onClick={save}>Save</button></div>
             <label style={styles.label}>Card Name</label><input style={styles.input} value={cardForm.name} onChange={e => setCardForm({ ...cardForm, name: e.target.value })} />
-            <label style={styles.label}>Frequency</label><select style={styles.select} value={cardForm.frequency} onChange={e => setCardForm({ ...cardForm, frequency: e.target.value })}><option value="daily">Daily</option><option value="every-2-3-days">Every 2-3 Days</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
+            <label style={styles.label}>Frequency</label>
+            <div style={styles.sortDropdown}>
+              <button type="button" style={styles.sortTrigger} onClick={() => setFreqDropdownOpen(!freqDropdownOpen)}>
+                {{ daily: 'Daily', 'every-2-3-days': 'Every 2-3 Days', weekly: 'Weekly', monthly: 'Monthly' }[cardForm.frequency]}
+                <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>▼</span>
+              </button>
+              {freqDropdownOpen && (
+                <>
+                  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setFreqDropdownOpen(false)} />
+                  <div style={styles.sortMenu}>
+                    {[{ value: 'daily', label: 'Daily' }, { value: 'every-2-3-days', label: 'Every 2-3 Days' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }].map(opt => (
+                      <div key={opt.value} style={{ ...styles.sortOption, ...(cardForm.frequency === opt.value ? styles.sortOptionActive : {}) }} onClick={() => { setCardForm({ ...cardForm, frequency: opt.value }); setFreqDropdownOpen(false); }}>
+                        <span style={{ width: '16px' }}>{cardForm.frequency === opt.value ? '●' : ''}</span>
+                        {opt.label}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <label style={styles.label}>Prayer Points</label><textarea style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }} value={cardForm.prayerPoint} onChange={e => setCardForm({ ...cardForm, prayerPoint: e.target.value })} placeholder="One per line" />
             {editingCard?.isGroup && <><label style={styles.label}>Unnamed children</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(cardForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCardForm({ ...cardForm, includeUnnamedChildren: true })}>Yes</div><div style={{ ...styles.toggleOption, ...(!cardForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCardForm({ ...cardForm, includeUnnamedChildren: false })}>No</div></div><label style={styles.label}>People in group</label>{cp.map(p => {
               const isOrg = !p.firstName && !p.lastName && p.organisation;
@@ -2784,18 +2766,113 @@
         if (groupStep === 1) return (
           <div className="app-container" style={styles.container}>
             <div className="app-header"><button style={styles.btnText} onClick={() => { setSelectedPeopleForGroup([]); setScreen('home'); }}>Cancel</button><button style={{ ...styles.btnText, opacity: selectedPeopleForGroup.length < 2 ? 0.4 : 1 }} onClick={() => selectedPeopleForGroup.length >= 2 && setGroupStep(2)}>Next ({selectedPeopleForGroup.length})</button></div>
-            <div style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Select people</div>
-            {!people.length ? <div style={styles.emptyState}>Add people first.</div> : <div style={{ maxHeight: 'calc(100vh - 140px)', overflowY: 'auto', padding: '4px 6px', margin: '0 -6px' }}>{getSortedPeople().map(p => { const isSel = selectedPeopleForGroup.includes(p.id); const isOrg = !p.firstName && !p.lastName && p.organisation; const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); return <div key={p.id} style={{ ...styles.listItem, background: isSel ? colors.primaryGradient : colors.cardBg, color: isSel ? colors.primaryText : colors.text }} onClick={() => setSelectedPeopleForGroup(prev => isSel ? prev.filter(id => id !== p.id) : [...prev, p.id])}><span style={{ fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span>{p.isChild && <span style={{ fontSize: '12px', opacity: 0.7 }}>(child)</span>}</div>; })}</div>}
+            <div style={{ fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>Select people</div>
+            
+            {/* Sorting controls */}
+            <div style={{ ...styles.sortRow, marginBottom: '12px' }}>
+              <div style={styles.sortDropdown}>
+                <button style={styles.sortTrigger} onClick={() => setSortDropdownOpen(o => !o)}>
+                  {sortBy === 'firstName' ? 'First Name' : sortBy === 'lastName' ? 'Last Name' : 'Frequency'}
+                  <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>▼</span>
+                </button>
+                {sortDropdownOpen && (
+                  <>
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setSortDropdownOpen(false)} />
+                    <div style={styles.sortMenu}>
+                      {[{ value: 'firstName', label: 'First Name' }, { value: 'lastName', label: 'Last Name' }, { value: 'frequency', label: 'Frequency' }].map(opt => (
+                        <div 
+                          key={opt.value}
+                          style={{ ...styles.sortOption, ...(sortBy === opt.value ? styles.sortOptionActive : {}) }}
+                          onClick={() => { setSortBy(opt.value); setSortDropdownOpen(false); }}
+                        >
+                          <span style={{ width: '16px' }}>{sortBy === opt.value ? '●' : ''}</span>
+                          {opt.label}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              <button style={styles.reverseBtn} onClick={() => setSortReversed(r => !r)}>{sortReversed ? '↑' : '↓'}</button>
+            </div>
+            
+            {!people.length ? <div style={styles.emptyState}>Add people first.</div> : (
+              <div style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '4px 6px', margin: '0 -6px' }}>
+                {sortBy !== 'frequency' ? (
+                  getSortedPeople().map(p => { 
+                    const isSel = selectedPeopleForGroup.includes(p.id); 
+                    const isOrg = !p.firstName && !p.lastName && p.organisation; 
+                    const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); 
+                    return (
+                      <div key={p.id} style={{ ...styles.listItem, background: isSel ? colors.primaryGradient : colors.cardBg, color: isSel ? colors.primaryText : colors.text }} onClick={() => setSelectedPeopleForGroup(prev => isSel ? prev.filter(id => id !== p.id) : [...prev, p.id])}>
+                        <span style={{ fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span>
+                        {p.isChild && <span style={{ fontSize: '12px', opacity: 0.7 }}>(child)</span>}
+                      </div>
+                    ); 
+                  })
+                ) : (
+                  (() => {
+                    const groups = {};
+                    getSortedPeople().forEach(p => {
+                      const freq = getPersonFrequency(p);
+                      if (!groups[freq]) groups[freq] = [];
+                      groups[freq].push(p);
+                    });
+                    const orderedFreqs = sortReversed ? [...frequencyOrder].reverse() : frequencyOrder;
+                    return orderedFreqs.map((freq) => {
+                      if (!groups[freq] || !groups[freq].length) return null;
+                      return (
+                        <div key={freq}>
+                          <div style={styles.frequencyHeading}>{formatFrequency(freq)}</div>
+                          {groups[freq].map(p => { 
+                            const isSel = selectedPeopleForGroup.includes(p.id); 
+                            const isOrg = !p.firstName && !p.lastName && p.organisation; 
+                            const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); 
+                            return (
+                              <div key={p.id} style={{ ...styles.listItem, background: isSel ? colors.primaryGradient : colors.cardBg, color: isSel ? colors.primaryText : colors.text }} onClick={() => setSelectedPeopleForGroup(prev => isSel ? prev.filter(id => id !== p.id) : [...prev, p.id])}>
+                                <span style={{ fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span>
+                                {p.isChild && <span style={{ fontSize: '12px', opacity: 0.7 }}>(child)</span>}
+                              </div>
+                            ); 
+                          })}
+                        </div>
+                      );
+                    });
+                  })()
+                )}
+              </div>
+            )}
           </div>
         );
         return (
-          <div className="app-container" style={styles.container}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
             <div className="app-header"><button style={styles.btnText} onClick={() => setGroupStep(1)}>← Back</button><button style={styles.btnText} onClick={create}>Create</button></div>
-            <label style={styles.label}>Group Name</label><input style={styles.input} value={groupForm.name} onChange={e => setGroupForm({ ...groupForm, name: e.target.value })} placeholder="e.g. Smiths" />
-            <label style={styles.label}>Frequency</label><select style={styles.select} value={groupForm.frequency} onChange={e => setGroupForm({ ...groupForm, frequency: e.target.value })}><option value="daily">Daily</option><option value="every-2-3-days">Every 2-3 Days</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
-            <label style={styles.label}>Prayer Points</label><textarea style={{ ...styles.input, minHeight: '60px', resize: 'vertical' }} value={groupForm.prayerPoint} onChange={e => setGroupForm({ ...groupForm, prayerPoint: e.target.value })} placeholder="One per line" />
-            <label style={styles.label}>Unnamed children</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(groupForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setGroupForm({ ...groupForm, includeUnnamedChildren: true })}>Yes</div><div style={{ ...styles.toggleOption, ...(!groupForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setGroupForm({ ...groupForm, includeUnnamedChildren: false })}>No</div></div>
-            <label style={styles.label}>Checkboxes</label><div style={{ maxHeight: '180px', overflowY: 'auto' }}>{sel.map(p => { const isOrg = !p.firstName && !p.lastName && p.organisation; const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); return <div key={p.id} style={{ ...styles.listItem, flexDirection: 'column', alignItems: 'stretch' }}><div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ fontWeight: '500', fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span><span style={{ fontSize: '12px', color: colors.textTertiary }}>{p.isChild ? 'Child' : 'Adult'}</span></div><div style={{ ...styles.toggle, marginBottom: 0 }}><div style={{ ...styles.toggleOption, fontSize: '13px', padding: '8px', ...((checkboxOverrides[p.id] ?? p.individualCheckbox) ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCheckboxOverrides({ ...checkboxOverrides, [p.id]: true })}>Individual</div><div style={{ ...styles.toggleOption, fontSize: '13px', padding: '8px', ...(!(checkboxOverrides[p.id] ?? p.individualCheckbox) ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCheckboxOverrides({ ...checkboxOverrides, [p.id]: false })}>Grouped</div></div></div>; })}</div>
+            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '20px' }}>
+              <label style={styles.label}>Group Name</label><input style={styles.input} value={groupForm.name} onChange={e => setGroupForm({ ...groupForm, name: e.target.value })} placeholder="e.g. Smiths" />
+              <label style={styles.label}>Frequency</label>
+              <div style={styles.sortDropdown}>
+                <button type="button" style={styles.sortTrigger} onClick={() => setFreqDropdownOpen(!freqDropdownOpen)}>
+                  {{ daily: 'Daily', 'every-2-3-days': 'Every 2-3 Days', weekly: 'Weekly', monthly: 'Monthly' }[groupForm.frequency]}
+                  <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>▼</span>
+                </button>
+                {freqDropdownOpen && (
+                  <>
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setFreqDropdownOpen(false)} />
+                    <div style={styles.sortMenu}>
+                      {[{ value: 'daily', label: 'Daily' }, { value: 'every-2-3-days', label: 'Every 2-3 Days' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }].map(opt => (
+                        <div key={opt.value} style={{ ...styles.sortOption, ...(groupForm.frequency === opt.value ? styles.sortOptionActive : {}) }} onClick={() => { setGroupForm({ ...groupForm, frequency: opt.value }); setFreqDropdownOpen(false); }}>
+                          <span style={{ width: '16px' }}>{groupForm.frequency === opt.value ? '●' : ''}</span>
+                          {opt.label}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              <label style={styles.label}>Prayer Points</label><textarea style={{ ...styles.input, minHeight: '60px', resize: 'vertical' }} value={groupForm.prayerPoint} onChange={e => setGroupForm({ ...groupForm, prayerPoint: e.target.value })} placeholder="One per line" />
+              <label style={styles.label}>Unnamed children</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(groupForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setGroupForm({ ...groupForm, includeUnnamedChildren: true })}>Yes</div><div style={{ ...styles.toggleOption, ...(!groupForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setGroupForm({ ...groupForm, includeUnnamedChildren: false })}>No</div></div>
+              <label style={styles.label}>Checkboxes</label><div>{sel.map(p => { const isOrg = !p.firstName && !p.lastName && p.organisation; const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); return <div key={p.id} style={{ ...styles.listItem, flexDirection: 'column', alignItems: 'stretch' }}><div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ fontWeight: '500', fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span><span style={{ fontSize: '12px', color: colors.textTertiary }}>{p.isChild ? 'Child' : 'Adult'}</span></div><div style={{ ...styles.toggle, marginBottom: 0 }}><div style={{ ...styles.toggleOption, fontSize: '13px', padding: '8px', ...((checkboxOverrides[p.id] ?? p.individualCheckbox) ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCheckboxOverrides({ ...checkboxOverrides, [p.id]: true })}>Individual</div><div style={{ ...styles.toggleOption, fontSize: '13px', padding: '8px', ...(!(checkboxOverrides[p.id] ?? p.individualCheckbox) ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCheckboxOverrides({ ...checkboxOverrides, [p.id]: false })}>Grouped</div></div></div>; })}</div>
+            </div>
           </div>
         );
       };
@@ -3224,30 +3301,18 @@
       // Help screen takes priority
       if (helpOpen) return renderHelp();
       
-      if (editingPerson) return <>{renderEditPerson()}{renderModal()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
-      if (editingCard) return <>{renderEditCard()}{renderModal()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
-      if (viewingStats) return <>{renderStats()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
+      if (editingPerson) return <>{renderEditPerson()}{renderModal()}</>;
+      if (editingCard) return <>{renderEditCard()}{renderModal()}</>;
+      if (viewingStats) return renderStats();
       
-      const mainContent = (() => {
-        switch (screen) {
-          case 'home': return renderHome();
-          case 'prayer': return renderPrayer();
-          case 'manage': return renderManage();
-          case 'stats': return renderStats();
-          case 'createGroup': return renderCreateGroup();
-          default: return renderHome();
-        }
-      })();
-      
-      // Show demo indicator only on sub-pages, not homepage (homepage has its own toggle)
-      const showDemoIndicator = demoMode && screen !== 'home';
-      
-      return (
-        <>
-          {mainContent}
-          {showDemoIndicator && <div className="demo-indicator">Demo Mode</div>}
-        </>
-      );
+      switch (screen) {
+        case 'home': return renderHome();
+        case 'prayer': return renderPrayer();
+        case 'manage': return renderManage();
+        case 'stats': return renderStats();
+        case 'createGroup': return renderCreateGroup();
+        default: return renderHome();
+      }
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
