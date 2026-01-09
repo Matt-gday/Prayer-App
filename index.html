@@ -54,157 +54,301 @@
       border-radius: 3px;
     }
     
-    /* Burger menu */
-    .burger-menu {
-      position: fixed;
-      top: max(12px, env(safe-area-inset-top));
-      left: max(16px, env(safe-area-inset-left));
-      z-index: 1000;
-      width: 36px;
-      height: 36px;
+    /* Info button (homepage only) */
+    .info-button {
+      position: absolute;
+      top: 12px;
+      left: 16px;
+      width: 28px;
+      height: 28px;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
       align-items: center;
-      gap: 5px;
+      justify-content: center;
       background: rgba(250,247,242,0.95);
-      border: 1px solid #D4C8B8;
-      border-radius: 10px;
+      border: 1.5px solid #D4C8B8;
+      border-radius: 50%;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(90,70,50,0.1);
+      font-size: 14px;
+      font-weight: 600;
+      font-style: italic;
+      font-family: Georgia, serif;
+      color: #6B5D4F;
+      box-shadow: 0 2px 6px rgba(90,70,50,0.1);
+      transition: all 0.2s ease;
     }
-    .burger-menu span {
-      width: 18px;
-      height: 2px;
-      background: #6B5D4F;
-      border-radius: 2px;
-      transition: all 0.3s ease;
-    }
-    .burger-menu.open span:nth-child(1) {
-      transform: rotate(45deg) translate(5px, 5px);
-    }
-    .burger-menu.open span:nth-child(2) {
-      opacity: 0;
-    }
-    .burger-menu.open span:nth-child(3) {
-      transform: rotate(-45deg) translate(5px, -5px);
+    .info-button:hover {
+      background: #FAF7F2;
+      border-color: #B87A4A;
+      color: #B87A4A;
     }
     
-    /* Menu overlay */
-    .menu-overlay {
+    /* Demo toggle button (homepage only) */
+    .demo-toggle {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(250,247,242,0.95);
+      border: 1.5px solid #D4C8B8;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      font-style: italic;
+      font-family: Georgia, serif;
+      color: #6B5D4F;
+      box-shadow: 0 2px 6px rgba(90,70,50,0.1);
+      transition: all 0.2s ease;
+    }
+    .demo-toggle:hover {
+      background: #FAF7F2;
+      border-color: #B87A4A;
+      color: #B87A4A;
+    }
+    .demo-toggle.active {
+      background: linear-gradient(135deg, #D49A5A 0%, #A66830 100%);
+      color: white;
+      border-color: #A66830;
+      box-shadow: 0 2px 8px rgba(184,122,74,0.3);
+    }
+    
+    /* Onboarding screen */
+    .onboarding-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(160deg, #F5EEE4 0%, #E8DECE 50%, #EDE4D8 100%);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .onboarding-card {
+      background: linear-gradient(145deg, #FFFFFF 0%, #F5F0E8 100%);
+      border-radius: 24px;
+      padding: 32px 28px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(90,70,50,0.15), 0 2px 8px rgba(90,70,50,0.1);
+      border: 1px solid #D4C8B8;
+    }
+    .onboarding-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #3D352C;
+      margin-bottom: 12px;
+    }
+    .onboarding-text {
+      font-size: 15px;
+      color: #6B5D4F;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .onboarding-input {
+      width: 100%;
+      padding: 16px 18px;
+      font-size: 18px;
+      text-align: center;
+      background: #FAF7F2;
+      border: 1.5px solid #D4C8B8;
+      border-radius: 14px;
+      color: #3D352C;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+      font-family: inherit;
+      outline: none;
+      text-transform: capitalize;
+      transition: border-color 0.2s ease;
+    }
+    .onboarding-input:focus {
+      border-color: #B87A4A;
+    }
+    .onboarding-input::placeholder {
+      text-transform: none;
+      color: #8C7B6A;
+    }
+    .onboarding-btn {
+      width: 100%;
+      padding: 16px 24px;
+      font-size: 17px;
+      font-weight: 600;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      margin-bottom: 12px;
+    }
+    .onboarding-btn-primary {
+      background: linear-gradient(135deg, #D49A5A 0%, #A66830 100%);
+      color: white;
+      box-shadow: 0 4px 16px rgba(184,122,74,0.35);
+    }
+    .onboarding-btn-secondary {
+      background: linear-gradient(135deg, #EDE4D6 0%, #D9CDBF 100%);
+      color: #4A3F34;
+      border: 1px solid #D4C8B8;
+    }
+    .onboarding-hint {
+      font-size: 13px;
+      color: #8C7B6A;
+      margin-top: 16px;
+      font-style: italic;
+    }
+    
+    /* Edit name button */
+    .edit-name-btn {
+      background: none;
+      border: none;
+      padding: 4px;
+      margin-left: 6px;
+      cursor: pointer;
+      color: #8C7B6A;
+      font-size: 12px;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+      vertical-align: middle;
+    }
+    .edit-name-btn:hover {
+      opacity: 1;
+      color: #B87A4A;
+    }
+    
+    /* Data sync button */
+    .data-sync-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(250,247,242,0.95);
+      border: 1.5px solid #D4C8B8;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      color: #6B5D4F;
+      box-shadow: 0 2px 6px rgba(90,70,50,0.1);
+      transition: all 0.2s ease;
+    }
+    .data-sync-btn:hover {
+      background: #FAF7F2;
+      border-color: #B87A4A;
+      color: #B87A4A;
+    }
+    
+    /* Data modal */
+    .data-modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.4);
-      z-index: 999;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-    .menu-overlay.open {
-      opacity: 1;
-      visibility: visible;
-    }
-    
-    /* Menu panel */
-    .menu-panel {
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      width: 280px;
-      max-width: 85vw;
-      background: linear-gradient(180deg, #FAF7F2 0%, #F5EEE4 100%);
-      z-index: 1001;
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-      box-shadow: 4px 0 20px rgba(0,0,0,0.1);
-      padding: max(60px, env(safe-area-inset-top)) 20px 20px;
-      display: flex;
-      flex-direction: column;
-    }
-    .menu-panel.open {
-      transform: translateX(0);
-    }
-    .menu-panel h2 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #3D352C;
-      margin-bottom: 24px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #D4C8B8;
-    }
-    .menu-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 16px;
-      margin-bottom: 6px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      color: #3D352C;
-      font-size: 16px;
-      font-weight: 500;
-      border: none;
-      background: transparent;
-      width: 100%;
-      text-align: left;
-    }
-    .menu-item:hover {
-      background: rgba(184,122,74,0.1);
-    }
-    .menu-item-icon {
-      width: 24px;
-      height: 24px;
+      z-index: 1500;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 24px;
+    }
+    .data-modal {
+      background: linear-gradient(145deg, #FFFFFF 0%, #F5F0E8 100%);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+      border: 1px solid #D4C8B8;
+    }
+    .data-modal h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #3D352C;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .data-modal-desc {
+      font-size: 14px;
+      color: #6B5D4F;
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .data-modal-btn {
+      width: 100%;
+      padding: 14px 20px;
       font-size: 16px;
       font-weight: 600;
-      color: #6B5D4F;
-      border: 1.5px solid #8C7B6A;
-      border-radius: 50%;
-    }
-    .menu-toggle {
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 14px 16px;
-      margin-bottom: 6px;
-      border-radius: 12px;
-      color: #3D352C;
-      font-size: 16px;
-      font-weight: 500;
+      justify-content: center;
+      gap: 10px;
     }
-    .menu-toggle-switch {
-      width: 48px;
-      height: 28px;
-      background: #DED4C6;
-      border-radius: 14px;
-      position: relative;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    .menu-toggle-switch.active {
+    .data-modal-btn-download {
       background: linear-gradient(135deg, #6DB88A 0%, #4A8862 100%);
+      color: white;
+      box-shadow: 0 4px 16px rgba(90,158,120,0.3);
     }
-    .menu-toggle-switch::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 24px;
-      height: 24px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      transition: transform 0.3s ease;
+    .data-modal-btn-upload {
+      background: linear-gradient(135deg, #EDE4D6 0%, #D9CDBF 100%);
+      color: #4A3F34;
+      border: 1px solid #D4C8B8;
     }
-    .menu-toggle-switch.active::after {
-      transform: translateX(20px);
+    .data-modal-btn-cancel {
+      background: transparent;
+      color: #8C7B6A;
+      margin-top: 8px;
+      margin-bottom: 0;
+    }
+    .data-modal-warning {
+      background: rgba(196,99,94,0.1);
+      border: 1px solid rgba(196,99,94,0.3);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #8B4513;
+      text-align: center;
+      line-height: 1.5;
     }
     
-    /* Demo mode indicator */
+    /* Edit name modal */
+    .edit-name-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .edit-name-modal {
+      background: linear-gradient(145deg, #FFFFFF 0%, #F5F0E8 100%);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 320px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+      border: 1px solid #D4C8B8;
+    }
+    .edit-name-modal h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #3D352C;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    
+    /* Demo mode indicator (for sub-pages) */
     .demo-indicator {
       position: fixed;
       top: max(12px, env(safe-area-inset-top));
@@ -613,7 +757,6 @@
       align-items: center;
       margin-bottom: 16px;
       min-height: 44px;
-      padding-left: 44px; /* Space for burger menu */
     }
      @media (orientation: landscape) and (max-width: 1023px) {
        .app-header {
@@ -875,10 +1018,21 @@
       const [groupStep, setGroupStep] = useState(1);
       const [checkboxOverrides, setCheckboxOverrides] = useState({});
       const [modal, setModal] = useState(null);
-      const [menuOpen, setMenuOpen] = useState(false);
       const [demoMode, setDemoMode] = useState(() => getStored('prayerApp_demoMode', false));
       const [helpOpen, setHelpOpen] = useState(false);
       const [openAccordions, setOpenAccordions] = useState({});
+      const [userName, setUserName] = useState(() => getStored('prayerApp_userName', ''));
+      const [onboardingComplete, setOnboardingComplete] = useState(() => getStored('prayerApp_onboardingComplete', false));
+      const [onboardingStep, setOnboardingStep] = useState(1);
+      const [nameInput, setNameInput] = useState('');
+      const [editingName, setEditingName] = useState(false);
+      const [editNameInput, setEditNameInput] = useState('');
+      const [dataModalOpen, setDataModalOpen] = useState(false);
+      const [dataModalStep, setDataModalStep] = useState('main'); // 'main', 'confirmUpload'
+      const [pendingUploadData, setPendingUploadData] = useState(null);
+      
+      // Data version for future migrations
+      const DATA_VERSION = 1;
       const [cardScrollState, setCardScrollState] = useState({ canScrollDown: false, canScrollUp: false });
       const cardScrollRef = React.useRef(null);
 
@@ -1029,11 +1183,113 @@
           setDemoMode(true);
           localStorage.setItem('prayerApp_demoMode', 'true');
         }
-        setMenuOpen(false);
       };
       
       const toggleAccordion = (id) => {
         setOpenAccordions(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+      
+      const capitalizeFirstLetter = (str) => {
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+      };
+      
+      const handleNameSubmit = () => {
+        if (nameInput.trim()) {
+          const capitalizedName = capitalizeFirstLetter(nameInput.trim());
+          setUserName(capitalizedName);
+          localStorage.setItem('prayerApp_userName', JSON.stringify(capitalizedName));
+          setOnboardingStep(2);
+        }
+      };
+      
+      const completeOnboarding = (enableDemo) => {
+        setOnboardingComplete(true);
+        localStorage.setItem('prayerApp_onboardingComplete', 'true');
+        if (enableDemo) {
+          loadDemoData();
+          setDemoMode(true);
+          localStorage.setItem('prayerApp_demoMode', 'true');
+        }
+      };
+      
+      const openEditName = () => {
+        setEditNameInput(userName);
+        setEditingName(true);
+      };
+      
+      const saveEditedName = () => {
+        if (editNameInput.trim()) {
+          const capitalizedName = capitalizeFirstLetter(editNameInput.trim());
+          setUserName(capitalizedName);
+          localStorage.setItem('prayerApp_userName', JSON.stringify(capitalizedName));
+          setEditingName(false);
+        }
+      };
+      
+      const downloadData = () => {
+        const exportData = {
+          version: DATA_VERSION,
+          exportDate: new Date().toISOString(),
+          userName,
+          people,
+          cards,
+          demoMode
+        };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `prayer-companion-backup-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setDataModalOpen(false);
+        setDataModalStep('main');
+      };
+      
+      const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (!data.version || !data.people || !data.cards) {
+              alert('Invalid backup file. Please select a valid Prayer Companion backup.');
+              return;
+            }
+            setPendingUploadData(data);
+            setDataModalStep('confirmUpload');
+          } catch (err) {
+            alert('Could not read file. Please select a valid JSON backup file.');
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = ''; // Reset file input
+      };
+      
+      const confirmUpload = () => {
+        if (!pendingUploadData) return;
+        
+        // Restore data
+        setPeople(pendingUploadData.people || []);
+        setCards(pendingUploadData.cards || []);
+        setUserName(pendingUploadData.userName || '');
+        setDemoMode(pendingUploadData.demoMode || false);
+        setSession(null);
+        
+        // Save to localStorage
+        localStorage.setItem('prayerApp_people', JSON.stringify(pendingUploadData.people || []));
+        localStorage.setItem('prayerApp_cards', JSON.stringify(pendingUploadData.cards || []));
+        localStorage.setItem('prayerApp_userName', JSON.stringify(pendingUploadData.userName || ''));
+        localStorage.setItem('prayerApp_demoMode', pendingUploadData.demoMode ? 'true' : 'false');
+        localStorage.removeItem('prayerApp_session');
+        
+        setPendingUploadData(null);
+        setDataModalStep('main');
+        setDataModalOpen(false);
       };
       
       const checkCardScroll = () => {
@@ -1689,34 +1945,66 @@
         );
       };
       
-      const renderMenu = () => (
-        <>
-          <div className={`menu-overlay ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(false)} />
-          <div className={`menu-panel ${menuOpen ? 'open' : ''}`}>
-            <h2>Menu</h2>
-            <div className="menu-toggle">
-              <span style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <span className="menu-item-icon">◉</span>
-                Demo Mode
-              </span>
-              <div className={`menu-toggle-switch ${demoMode ? 'active' : ''}`} onClick={toggleDemoMode} />
+      const renderOnboarding = () => {
+        if (onboardingStep === 1) {
+          return (
+            <div className="onboarding-overlay">
+              <div className="onboarding-card">
+                <div className="onboarding-title">Welcome to Prayer Companion</div>
+                <div className="onboarding-text">
+                  A simple way to remember and organize your daily prayers for the people you care about.
+                </div>
+                <input
+                  className="onboarding-input"
+                  type="text"
+                  placeholder="Enter your first name"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
+                  autoFocus
+                />
+                <button 
+                  className="onboarding-btn onboarding-btn-primary"
+                  onClick={handleNameSubmit}
+                  disabled={!nameInput.trim()}
+                  style={{ opacity: nameInput.trim() ? 1 : 0.5 }}
+                >
+                  Continue
+                </button>
+                <div className="onboarding-hint">
+                  You can change your name anytime by tapping the edit icon next to your greeting.
+                </div>
+              </div>
             </div>
-            <button className="menu-item" onClick={() => { setHelpOpen(true); setMenuOpen(false); }}>
-              <span className="menu-item-icon">?</span>
-              How to Use
-            </button>
-            <div style={{ flex: 1 }} />
-            <div style={{ padding: '16px', borderTop: `1px solid ${colors.border}`, marginTop: '16px', fontSize: '12px', color: colors.textTertiary, textAlign: 'center' }}>
-              Prayer Companion v1.0
+          );
+        }
+        
+        return (
+          <div className="onboarding-overlay">
+            <div className="onboarding-card">
+              <div className="onboarding-title">Hi, {userName}!</div>
+              <div className="onboarding-text">
+                Would you like to start with some demo content? This will add sample people and prayer groups so you can explore how the app works.
+              </div>
+              <button 
+                className="onboarding-btn onboarding-btn-primary"
+                onClick={() => completeOnboarding(true)}
+              >
+                Yes, show me a demo
+              </button>
+              <button 
+                className="onboarding-btn onboarding-btn-secondary"
+                onClick={() => completeOnboarding(false)}
+              >
+                No, I'll start fresh
+              </button>
+              <div className="onboarding-hint">
+                You can toggle demo mode anytime using the "D" button on the home screen.
+              </div>
             </div>
           </div>
-          <button className={`burger-menu ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(!menuOpen)}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-        </>
-      );
+        );
+      };
       
       const renderHelp = () => {
         const helpSections = [
@@ -1814,6 +2102,27 @@
                 <p>Tap any person or group to see details. In History, you can view a calendar showing which days you prayed and what prayer points were used.</p>
               </>
             )
+          },
+          {
+            id: 'backup',
+            title: 'Backup & Restore',
+            content: (
+              <>
+                <p>Your prayer data is stored on your device. To keep it safe:</p>
+                <ul>
+                  <li>Tap the <strong>⇅ button</strong> at the top of the home screen</li>
+                  <li><strong>Download Backup</strong> saves a file to your device</li>
+                  <li><strong>Restore from Backup</strong> loads a previously saved file</li>
+                </ul>
+                <p><strong>When to backup:</strong></p>
+                <ul>
+                  <li>Before clearing your browser cache or data</li>
+                  <li>Before switching devices</li>
+                  <li>Periodically, to protect against data loss</li>
+                </ul>
+                <div className="help-tip">Tip: Store your backup file in cloud storage (iCloud, Google Drive) for extra safety.</div>
+              </>
+            )
           }
         ];
         
@@ -1851,29 +2160,53 @@
         return (
           <div className="app-container" style={{ ...styles.container, position: 'relative', display: 'flex', flexDirection: 'column', height: '100vh', paddingBottom: '60px', overflow: 'hidden' }}>
             
-            {/* Header row for landscape - greeting left */}
-            <div className="home-header-row" style={{ display: 'none', paddingTop: '4px', marginBottom: '8px', paddingLeft: '44px', paddingRight: '90px' }}>
-              <div className="home-greeting-text">
-                <span style={{ fontSize: '20px', fontWeight: '700', color: colors.text }}>{showContinue ? 'Welcome back' : getGreeting('Matt')}</span>
-                <span style={{ fontSize: '14px', color: colors.textSecondary }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</span>
-              </div>
+            {/* Top row with info, sync, and demo buttons */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <button className="info-button" style={{ position: 'static' }} onClick={() => setHelpOpen(true)}>i</button>
+              <button className="data-sync-btn" onClick={() => { setDataModalOpen(true); setDataModalStep('main'); }} title="Backup & Restore">⇅</button>
+              <button className={`demo-toggle ${demoMode ? 'active' : ''}`} style={{ position: 'static' }} onClick={toggleDemoMode}>D</button>
             </div>
             
-            {/* Greeting for portrait */}
-            <div className="home-greeting" style={{ textAlign: 'center', paddingTop: '12px', marginBottom: '8px', paddingLeft: '44px', paddingRight: '90px' }}>
-              <div className="home-welcome" style={{ ...styles.greeting, fontSize: '24px', marginTop: 0, marginBottom: '2px' }}>{showContinue ? 'Welcome back' : getGreeting('Matt')}</div>
-              <div className="home-subtext" style={{ ...styles.subGreeting, fontSize: '14px', marginBottom: '0' }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
-            </div>
+            {/* Greeting - now below buttons */}
+            {(() => {
+              const greetingText = showContinue ? 'Welcome back' : getGreeting(userName || 'Friend');
+              // Adjust font size based on text length to prevent line breaks
+              const greetingLength = greetingText.length;
+              const greetingFontSize = greetingLength > 24 ? '18px' : greetingLength > 20 ? '20px' : greetingLength > 16 ? '22px' : '24px';
+              const landscapeFontSize = greetingLength > 24 ? '16px' : greetingLength > 20 ? '17px' : greetingLength > 16 ? '18px' : '20px';
+              return (
+                <>
+                  <div className="home-greeting" style={{ textAlign: 'center', marginBottom: '8px' }}>
+                    <div className="home-welcome" style={{ ...styles.greeting, fontSize: greetingFontSize, marginTop: 0, marginBottom: '2px', whiteSpace: 'nowrap' }}>
+                      {greetingText}
+                      <button className="edit-name-btn" onClick={openEditName} title="Edit name">✎</button>
+                    </div>
+                    <div className="home-subtext" style={{ ...styles.subGreeting, fontSize: '14px', marginBottom: '0' }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
+                  </div>
+                  
+                  {/* Header row for landscape - greeting */}
+                  <div className="home-header-row" style={{ display: 'none', paddingTop: '4px', marginBottom: '8px' }}>
+                    <div className="home-greeting-text">
+                      <span style={{ fontSize: landscapeFontSize, fontWeight: '700', color: colors.text, whiteSpace: 'nowrap' }}>
+                        {greetingText}
+                        <button className="edit-name-btn" onClick={openEditName} title="Edit name">✎</button>
+                      </span>
+                      <span style={{ fontSize: '14px', color: colors.textSecondary }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</span>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
             
             {/* Main content - two columns in landscape */}
             <div className="home-content">
               {/* Left column: Start button only in landscape */}
               <div className="home-left">
                 {/* Spacer to push content down (portrait only) */}
-                <div className="home-spacer-top" style={{ flex: '1 1 auto', minHeight: '12px', maxHeight: '40px' }} />
+                <div className="home-spacer-top" style={{ flex: '0 0 auto', minHeight: '8px', maxHeight: '20px' }} />
                 
 {/* Circular Start Praying button */}
-                 <div className="home-start-btn-wrapper home-start-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '30px 0', marginBottom: '16px' }}>
+                 <div className="home-start-btn-wrapper home-start-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '16px 0', marginBottom: '16px' }}>
                    <button 
                      className="home-start-btn"
                      style={{
@@ -2009,6 +2342,90 @@
                  Prayer History
                </button>
              </div>
+             
+             {/* Edit name modal */}
+             {editingName && (
+               <div className="edit-name-overlay" onClick={() => setEditingName(false)}>
+                 <div className="edit-name-modal" onClick={(e) => e.stopPropagation()}>
+                   <h3>Edit Your Name</h3>
+                   <input
+                     className="onboarding-input"
+                     type="text"
+                     placeholder="Enter your first name"
+                     value={editNameInput}
+                     onChange={(e) => setEditNameInput(e.target.value)}
+                     onKeyDown={(e) => e.key === 'Enter' && saveEditedName()}
+                     autoFocus
+                   />
+                   <div style={{ display: 'flex', gap: '12px' }}>
+                     <button 
+                       className="onboarding-btn onboarding-btn-secondary"
+                       style={{ flex: 1, marginBottom: 0 }}
+                       onClick={() => setEditingName(false)}
+                     >
+                       Cancel
+                     </button>
+                     <button 
+                       className="onboarding-btn onboarding-btn-primary"
+                       style={{ flex: 1, marginBottom: 0, opacity: editNameInput.trim() ? 1 : 0.5 }}
+                       onClick={saveEditedName}
+                       disabled={!editNameInput.trim()}
+                     >
+                       Save
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             )}
+             
+             {/* Data backup/restore modal */}
+             {dataModalOpen && (
+               <div className="data-modal-overlay" onClick={() => { setDataModalOpen(false); setDataModalStep('main'); setPendingUploadData(null); }}>
+                 <div className="data-modal" onClick={(e) => e.stopPropagation()}>
+                   {dataModalStep === 'main' ? (
+                     <>
+                       <h3>Backup & Restore</h3>
+                       <div className="data-modal-desc">
+                         Download a backup of your prayer list to keep it safe, or restore from a previous backup.
+                       </div>
+                       <button className="data-modal-btn data-modal-btn-download" onClick={downloadData}>
+                         <span>↓</span> Download Backup
+                       </button>
+                       <label className="data-modal-btn data-modal-btn-upload" style={{ cursor: 'pointer' }}>
+                         <span>↑</span> Restore from Backup
+                         <input 
+                           type="file" 
+                           accept=".json"
+                           style={{ display: 'none' }}
+                           onChange={handleFileUpload}
+                         />
+                       </label>
+                       <button className="data-modal-btn data-modal-btn-cancel" onClick={() => setDataModalOpen(false)}>
+                         Cancel
+                       </button>
+                     </>
+                   ) : (
+                     <>
+                       <h3>Confirm Restore</h3>
+                       <div className="data-modal-warning">
+                         <strong>Warning:</strong> This will replace all your current prayer data with the backup. Any changes you've made since this backup will be lost.
+                       </div>
+                       <div className="data-modal-desc" style={{ marginBottom: '16px' }}>
+                         Backup from: {pendingUploadData?.exportDate ? new Date(pendingUploadData.exportDate).toLocaleDateString() : 'Unknown date'}
+                         <br />
+                         Contains: {pendingUploadData?.people?.length || 0} people, {pendingUploadData?.cards?.length || 0} cards
+                       </div>
+                       <button className="data-modal-btn data-modal-btn-download" onClick={confirmUpload}>
+                         Yes, Restore This Backup
+                       </button>
+                       <button className="data-modal-btn data-modal-btn-cancel" onClick={() => { setDataModalStep('main'); setPendingUploadData(null); }}>
+                         Cancel
+                       </button>
+                     </>
+                   )}
+                 </div>
+               </div>
+             )}
           </div>
         );
       };
@@ -2801,12 +3218,15 @@
         );
       };
 
-      // Help screen takes priority
-      if (helpOpen) return <>{renderHelp()}{renderMenu()}</>;
+      // Onboarding takes highest priority
+      if (!onboardingComplete) return renderOnboarding();
       
-      if (editingPerson) return <>{renderEditPerson()}{renderModal()}{renderMenu()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
-      if (editingCard) return <>{renderEditCard()}{renderModal()}{renderMenu()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
-      if (viewingStats) return <>{renderStats()}{renderMenu()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
+      // Help screen takes priority
+      if (helpOpen) return renderHelp();
+      
+      if (editingPerson) return <>{renderEditPerson()}{renderModal()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
+      if (editingCard) return <>{renderEditCard()}{renderModal()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
+      if (viewingStats) return <>{renderStats()}{demoMode && <div className="demo-indicator">Demo Mode</div>}</>;
       
       const mainContent = (() => {
         switch (screen) {
@@ -2819,11 +3239,13 @@
         }
       })();
       
+      // Show demo indicator only on sub-pages, not homepage (homepage has its own toggle)
+      const showDemoIndicator = demoMode && screen !== 'home';
+      
       return (
         <>
           {mainContent}
-          {renderMenu()}
-          {demoMode && <div className="demo-indicator">Demo Mode</div>}
+          {showDemoIndicator && <div className="demo-indicator">Demo Mode</div>}
         </>
       );
     }
