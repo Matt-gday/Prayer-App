@@ -364,7 +364,7 @@
       transition: max-height 0.3s ease;
     }
     .help-accordion-content.open {
-      max-height: 500px;
+      max-height: 1500px;
     }
     .help-accordion-body {
       padding: 0 16px 16px;
@@ -802,19 +802,19 @@
     const generateDemoData = () => {
       const today = new Date();
       const demoPeople = [
-        { id: 'p1', firstName: 'Sarah', lastName: 'Mitchell', organisation: '', prayerPoint: 'Healing from surgery\nPeace during recovery', isChild: false, individualCheckbox: true },
-        { id: 'p2', firstName: 'James', lastName: 'Mitchell', organisation: '', prayerPoint: 'Job interview this week\nWisdom in career decisions', isChild: false, individualCheckbox: true },
+        { id: 'p1', firstName: 'Hannah', lastName: 'Mitchell', organisation: '', prayerPoint: 'Healing from surgery\nPeace during recovery', isChild: false, individualCheckbox: true },
+        { id: 'p2', firstName: 'Thomas', lastName: 'Mitchell', organisation: '', prayerPoint: 'Job interview this week\nWisdom in career decisions', isChild: false, individualCheckbox: true },
         { id: 'p3', firstName: 'Emma', lastName: 'Mitchell', organisation: '', prayerPoint: '', isChild: true, individualCheckbox: false },
         { id: 'p4', firstName: 'Liam', lastName: 'Mitchell', organisation: '', prayerPoint: '', isChild: true, individualCheckbox: false },
         { id: 'p5', firstName: 'Victoria', lastName: 'Greene', organisation: '', prayerPoint: 'Confidence at school', isChild: false, individualCheckbox: true },
         { id: 'p6', firstName: 'David', lastName: 'Chen', organisation: 'Christ Central Church', prayerPoint: 'Wisdom for church direction', isChild: false, individualCheckbox: true },
-        { id: 'p7', firstName: 'Scott', lastName: 'Reynolds', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
+        { id: 'p7', firstName: 'Nathan', lastName: 'Reynolds', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
         { id: 'p8', firstName: 'Craig', lastName: 'Thompson', organisation: '', prayerPoint: 'Marriage restoration', isChild: false, individualCheckbox: true },
         { id: 'p9', firstName: 'Ben', lastName: 'Parker', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
-        { id: 'p10', firstName: 'Estelle', lastName: 'Warren', organisation: '', prayerPoint: 'Peace and direction', isChild: false, individualCheckbox: true },
-        { id: 'p11', firstName: 'Jessica', lastName: 'Martin', organisation: '', prayerPoint: 'Music ministry growth', isChild: false, individualCheckbox: true },
+        { id: 'p10', firstName: 'Grace', lastName: 'Warren', organisation: '', prayerPoint: 'Peace and direction', isChild: false, individualCheckbox: true },
+        { id: 'p11', firstName: 'Megan', lastName: 'Martin', organisation: '', prayerPoint: 'Music ministry growth', isChild: false, individualCheckbox: true },
         { id: 'p12', firstName: 'Michael', lastName: 'Torres', organisation: '', prayerPoint: 'Financial breakthrough', isChild: false, individualCheckbox: true },
-        { id: 'p13', firstName: 'Rachel', lastName: 'Torres', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
+        { id: 'p13', firstName: 'Claire', lastName: 'Torres', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
         { id: 'p14', firstName: 'Sophie', lastName: 'Torres', organisation: '', prayerPoint: '', isChild: true, individualCheckbox: false },
         { id: 'p15', firstName: 'Mark', lastName: 'Stevens', organisation: 'OMF Thailand', prayerPoint: 'Protection and provision', isChild: false, individualCheckbox: true },
         { id: 'p16', firstName: '', lastName: '', organisation: 'City Youth Outreach', prayerPoint: 'Volunteer recruitment', isChild: false, individualCheckbox: true },
@@ -948,7 +948,7 @@
       const [editingCard, setEditingCard] = useState(null);
       const [viewingStats, setViewingStats] = useState(null);
       const [statsMonth, setStatsMonth] = useState(new Date());
-      const [sortBy, setSortBy] = useState('firstName');
+      const [sortBy, setSortBy] = useState('lastName');
       const [sortReversed, setSortReversed] = useState(false);
       const [cardSortBy, setCardSortBy] = useState('name');
       const [manageTab, setManageTab] = useState('people');
@@ -974,6 +974,43 @@
       const [dataModalOpen, setDataModalOpen] = useState(false);
       const [dataModalStep, setDataModalStep] = useState('main'); // 'main', 'confirmUpload'
       const [pendingUploadData, setPendingUploadData] = useState(null);
+      
+      // PWA Install prompt state
+      const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
+      const [isStandalone, setIsStandalone] = useState(false);
+      const [isIOS, setIsIOS] = useState(false);
+      const [isMobile, setIsMobile] = useState(false);
+      
+      // Detect standalone mode, iOS, and mobile on mount
+      useEffect(() => {
+        // Check if already running as installed PWA
+        const standalone = window.matchMedia('(display-mode: standalone)').matches || 
+                          window.navigator.standalone === true;
+        setIsStandalone(standalone);
+        
+        // Detect iOS
+        const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        setIsIOS(iOS);
+        
+        // Detect mobile/tablet (skip install modal on desktop)
+        const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+                      window.innerWidth <= 1024;
+        setIsMobile(mobile);
+        
+        // Listen for PWA install prompt (Android/Chrome)
+        const handleBeforeInstallPrompt = (e) => {
+          e.preventDefault();
+          setDeferredInstallPrompt(e);
+        };
+        
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        
+        return () => {
+          window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+      }, []);
       
       // Data version for future migrations
       const DATA_VERSION = 1;
@@ -1146,14 +1183,67 @@
         }
       };
       
-      const completeOnboarding = (enableDemo) => {
+      // Onboarding flow:
+      // Step 1: Name input
+      // Step 2: Demo content choice
+      // Step 3: Install to home screen prompt
+      // Step 4: How to use prompt
+      const [pendingDemoChoice, setPendingDemoChoice] = useState(false);
+      
+      const handleDemoChoice = (enableDemo) => {
+        // Save the demo choice to apply at the end
+        setPendingDemoChoice(enableDemo);
+        // Move to install prompt step
+        setOnboardingStep(3);
+      };
+      
+      const handleInstallPrompt = async () => {
+        // Try to trigger the native install prompt (Android/Chrome)
+        if (deferredInstallPrompt) {
+          try {
+            deferredInstallPrompt.prompt();
+            const choice = await deferredInstallPrompt.userChoice;
+            // Clear the prompt after use
+            setDeferredInstallPrompt(null);
+          } catch (err) {
+            console.log('Install prompt error:', err);
+          }
+        }
+        // Move to How to Use step
+        setOnboardingStep(4);
+      };
+      
+      const skipInstall = () => {
+        // Move to How to Use step
+        setOnboardingStep(4);
+      };
+      
+      const finalizeOnboarding = (showHelp = false) => {
+        // Apply demo mode if chosen
+        if (pendingDemoChoice) {
+          loadDemoData();
+          setDemoMode(true);
+          localStorage.setItem('prayerApp_demoMode', 'true');
+        }
+        // Mark onboarding as complete
         setOnboardingComplete(true);
         localStorage.setItem('prayerApp_onboardingComplete', 'true');
+        // Show help if requested, with Getting Started accordion open
+        if (showHelp) {
+          setOpenAccordions({ 'getting-started': true });
+          setHelpOpen(true);
+        }
+      };
+      
+      // Legacy function for compatibility (if needed)
+      const completeOnboarding = (enableDemo) => {
         if (enableDemo) {
           loadDemoData();
           setDemoMode(true);
           localStorage.setItem('prayerApp_demoMode', 'true');
         }
+        setOnboardingComplete(true);
+        localStorage.setItem('prayerApp_onboardingComplete', 'true');
       };
       
       const openEditName = () => {
@@ -1604,7 +1694,7 @@
             const freqA = frequencyOrder.indexOf(getPersonFrequency(a));
             const freqB = frequencyOrder.indexOf(getPersonFrequency(b));
             if (freqA !== freqB) return freqA - freqB;
-            return a.firstName.localeCompare(b.firstName);
+            return (a.lastName || '').localeCompare(b.lastName || '');
           }
           return 0;
         });
@@ -1890,6 +1980,7 @@
       };
       
       const renderOnboarding = () => {
+        // Step 1: Name input
         if (onboardingStep === 1) {
           return (
             <div className="onboarding-overlay">
@@ -1923,31 +2014,190 @@
           );
         }
         
-        return (
-          <div className="onboarding-overlay">
-            <div className="onboarding-card">
-              <div className="onboarding-title">Hi, {userName}!</div>
-              <div className="onboarding-text">
-                Would you like to start with some demo content? This will add sample people and prayer groups so you can explore how the app works.
-              </div>
-              <button 
-                className="onboarding-btn onboarding-btn-primary"
-                onClick={() => completeOnboarding(true)}
-              >
-                Yes, show me a demo
-              </button>
-              <button 
-                className="onboarding-btn onboarding-btn-secondary"
-                onClick={() => completeOnboarding(false)}
-              >
-                No, I'll start fresh
-              </button>
-              <div className="onboarding-hint">
-                You can toggle demo mode anytime using the "D" button on the home screen.
+        // Step 2: Demo content choice
+        if (onboardingStep === 2) {
+          return (
+            <div className="onboarding-overlay">
+              <div className="onboarding-card">
+                <div className="onboarding-title">Hi, {userName}!</div>
+                <div className="onboarding-text">
+                  Would you like to start with some demo content? This will add sample people and prayer groups so you can explore how the app works.
+                </div>
+                <button 
+                  className="onboarding-btn onboarding-btn-primary"
+                  onClick={() => handleDemoChoice(true)}
+                >
+                  Yes, show me a demo
+                </button>
+                <button 
+                  className="onboarding-btn onboarding-btn-secondary"
+                  onClick={() => handleDemoChoice(false)}
+                >
+                  No, I'll start fresh
+                </button>
+                <div className="onboarding-hint">
+                  You can toggle demo mode anytime using the "D" button on the home screen.
+                </div>
               </div>
             </div>
-          </div>
-        );
+          );
+        }
+        
+        // Step 3: Install to home screen prompt (mobile/tablet only)
+        if (onboardingStep === 3) {
+          // Skip install step if already running as standalone app OR on desktop
+          if (isStandalone || !isMobile) {
+            setOnboardingStep(4);
+            return null;
+          }
+          
+          return (
+            <div className="onboarding-overlay">
+              <div className="onboarding-card">
+                <div className="onboarding-title">Add to Home Screen</div>
+                <div className="onboarding-text">
+                  For the best experience, add Prayer Companion to your home screen. This gives you quick access and a full-screen experience.
+                </div>
+                
+                {/* iOS-specific instructions */}
+                {isIOS && !deferredInstallPrompt && (
+                  <div style={{ 
+                    background: 'linear-gradient(135deg, #F5F0E8 0%, #EDE4D8 100%)', 
+                    borderRadius: '12px', 
+                    padding: '16px', 
+                    marginBottom: '20px',
+                    border: '1px solid #D4C8B8'
+                  }}>
+                    <div style={{ fontWeight: '600', marginBottom: '12px', color: '#3D352C' }}>
+                      On iPhone/iPad:
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
+                      <span style={{ 
+                        background: '#B87A4A', 
+                        color: 'white', 
+                        width: '24px', 
+                        height: '24px', 
+                        borderRadius: '50%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        flexShrink: 0
+                      }}>1</span>
+                      <span style={{ color: '#4A3F34', fontSize: '14px' }}>
+                        Tap the <strong>Share</strong> button (square with arrow) at the bottom of Safari
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
+                      <span style={{ 
+                        background: '#B87A4A', 
+                        color: 'white', 
+                        width: '24px', 
+                        height: '24px', 
+                        borderRadius: '50%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        flexShrink: 0
+                      }}>2</span>
+                      <span style={{ color: '#4A3F34', fontSize: '14px' }}>
+                        Scroll down and tap <strong>"Add to Home Screen"</strong>
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                      <span style={{ 
+                        background: '#B87A4A', 
+                        color: 'white', 
+                        width: '24px', 
+                        height: '24px', 
+                        borderRadius: '50%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        flexShrink: 0
+                      }}>3</span>
+                      <span style={{ color: '#4A3F34', fontSize: '14px' }}>
+                        Tap <strong>"Add"</strong> in the top right corner
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Android/Chrome - show install button if available */}
+                {deferredInstallPrompt && (
+                  <button 
+                    className="onboarding-btn onboarding-btn-primary"
+                    onClick={handleInstallPrompt}
+                  >
+                    Install App
+                  </button>
+                )}
+                
+                {/* Non-iOS without install prompt */}
+                {!isIOS && !deferredInstallPrompt && (
+                  <div style={{ 
+                    background: 'linear-gradient(135deg, #F5F0E8 0%, #EDE4D8 100%)', 
+                    borderRadius: '12px', 
+                    padding: '16px', 
+                    marginBottom: '20px',
+                    border: '1px solid #D4C8B8',
+                    fontSize: '14px',
+                    color: '#4A3F34'
+                  }}>
+                    Your browser doesn't support automatic installation, but you can bookmark this page or add it to your home screen from your browser's menu.
+                  </div>
+                )}
+                
+                <button 
+                  className="onboarding-btn onboarding-btn-secondary"
+                  onClick={skipInstall}
+                >
+                  {isIOS ? "I've done this" : deferredInstallPrompt ? "Maybe later" : "Continue"}
+                </button>
+                
+                <div className="onboarding-hint">
+                  You can find install instructions anytime in the "How to Use" section (tap the ⓘ button).
+                </div>
+              </div>
+            </div>
+          );
+        }
+        
+        // Step 4: How to Use prompt
+        if (onboardingStep === 4) {
+          return (
+            <div className="onboarding-overlay">
+              <div className="onboarding-card">
+                <div className="onboarding-title">You're all set!</div>
+                <div className="onboarding-text">
+                  Would you like a quick tour of how Prayer Companion works? It only takes a minute.
+                </div>
+                <button 
+                  className="onboarding-btn onboarding-btn-primary"
+                  onClick={() => finalizeOnboarding(true)}
+                >
+                  Yes, show me how it works
+                </button>
+                <button 
+                  className="onboarding-btn onboarding-btn-secondary"
+                  onClick={() => finalizeOnboarding(false)}
+                >
+                  No thanks, I'll explore
+                </button>
+                <div className="onboarding-hint">
+                  You can access "How to Use" anytime by tapping the ⓘ button on the home screen.
+                </div>
+              </div>
+            </div>
+          );
+        }
+        
+        return null;
       };
       
       const renderHelp = () => {
@@ -2067,16 +2317,58 @@
                 <div className="help-tip">Tip: Store your backup file in cloud storage (iCloud, Google Drive) for extra safety.</div>
               </>
             )
+          },
+          {
+            id: 'install-app',
+            title: 'Install to Home Screen',
+            content: (
+              <>
+                <p>For the best experience, add Prayer Companion to your home screen. This gives you:</p>
+                <ul>
+                  <li>Quick one-tap access from your home screen</li>
+                  <li>Full-screen experience without browser bars</li>
+                  <li>Works offline once loaded</li>
+                </ul>
+                
+                <div style={{ marginTop: '16px', marginBottom: '12px', fontWeight: '600', color: '#3D352C' }}>
+                  On iPhone / iPad (Safari):
+                </div>
+                <ol style={{ paddingLeft: '20px', margin: '0 0 16px 0' }}>
+                  <li style={{ marginBottom: '8px' }}>Tap the <strong>Share</strong> button (square with arrow ↑) at the bottom of Safari</li>
+                  <li style={{ marginBottom: '8px' }}>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+                  <li style={{ marginBottom: '8px' }}>Tap <strong>"Add"</strong> in the top right corner</li>
+                </ol>
+                
+                <div style={{ marginBottom: '12px', fontWeight: '600', color: '#3D352C' }}>
+                  On Android (Chrome):
+                </div>
+                <ol style={{ paddingLeft: '20px', margin: '0 0 16px 0' }}>
+                  <li style={{ marginBottom: '8px' }}>Tap the <strong>menu</strong> button (three dots ⋮) in the top right</li>
+                  <li style={{ marginBottom: '8px' }}>Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong></li>
+                  <li style={{ marginBottom: '8px' }}>Tap <strong>"Add"</strong> or <strong>"Install"</strong> to confirm</li>
+                </ol>
+                
+                <div style={{ marginBottom: '12px', fontWeight: '600', color: '#3D352C' }}>
+                  On Desktop (Chrome, Edge):
+                </div>
+                <ol style={{ paddingLeft: '20px', margin: '0' }}>
+                  <li style={{ marginBottom: '8px' }}>Look for the <strong>install icon</strong> (⊕) in the address bar</li>
+                  <li style={{ marginBottom: '8px' }}>Or click the menu and select <strong>"Install Prayer Companion"</strong></li>
+                </ol>
+                
+                <div className="help-tip">Tip: After installing, open the app from your home screen for the full-screen experience!</div>
+              </>
+            )
           }
         ];
         
         return (
-          <div className="app-container" style={styles.container}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
             <div className="app-header">
               <button style={styles.btnText} onClick={() => setHelpOpen(false)}>← Back</button>
             </div>
             <div className="page-title">How to Use</div>
-            <div style={{ maxHeight: 'calc(100vh - 140px)', overflowY: 'auto', paddingBottom: '20px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '100px' }}>
               {helpSections.map(section => (
                 <div key={section.id} className="help-section">
                   <div className="help-accordion">
@@ -2596,6 +2888,7 @@
             <div className="app-header">
               <button style={styles.btnText} onClick={() => setScreen('home')}>← Back</button>
               {manageTab === 'people' && <button style={styles.btnText} onClick={() => setEditingPerson({})}>+ Add</button>}
+              {manageTab === 'cards' && <button style={styles.btnText} onClick={() => setScreen('createGroup')}>+ Add</button>}
             </div>
             
             {/* Portrait: Tabs stacked above sorting */}
