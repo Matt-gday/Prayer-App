@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#EDE4D8">
   
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Oranienbaum&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -26,8 +26,8 @@
     html, body, #root {
       height: 100%;
       width: 100%;
-      /* Match app gradient everywhere to avoid white edges */
-      background: linear-gradient(160deg, #F5EEE4 0%, #E8DECE 50%, #EDE4D8 100%);
+      /* Browser background - slightly darker to contrast with app */
+      background: linear-gradient(160deg, #E0D5C4 0%, #D4C8B5 50%, #C9BCA8 100%);
       background-attachment: fixed;
     }
     body {
@@ -395,14 +395,32 @@
       max-width: none;
       width: 100%;
     }
-    /* Desktop only - constrained width with seamless background */
+    /* Desktop wrapper - rounded container */
+    .desktop-wrapper {
+      display: block;
+    }
     @media (min-width: 1200px) {
+      .desktop-wrapper {
+        max-width: 540px;
+        margin: 20px auto;
+        background: linear-gradient(160deg, #F5EEE4 0%, #E8DECE 50%, #EDE4D8 100%);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid #D4C8B8;
+        overflow: hidden;
+        min-height: calc(100vh - 40px);
+        display: flex;
+        flex-direction: column;
+      }
       .app-container {
         max-width: 540px;
         background: transparent !important;
       }
     }
     @media (min-width: 1400px) {
+      .desktop-wrapper {
+        max-width: 600px;
+      }
       .app-container {
         max-width: 600px;
       }
@@ -512,6 +530,13 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      min-height: 0;
+      max-height: 100%;
+    }
+    .card-content-scrollable {
+      -webkit-overflow-scrolling: touch;
+      overflow-y: auto;
+      min-height: 0;
     }
     .prayer-nav-area {
       flex-shrink: 0;
@@ -721,11 +746,59 @@
      /* Portrait/Landscape only visibility */
      .portrait-only { display: block !important; }
      .landscape-only { display: none !important; }
-     @media (orientation: landscape) and (max-width: 1023px) {
-       .portrait-only { display: none !important; }
-       .landscape-only { display: block !important; }
+    @media (orientation: landscape) and (max-width: 1023px) {
+      .portrait-only { display: none !important; }
+      .landscape-only { display: flex !important; }
        .card-header-row { margin-bottom: 4px !important; }
        .sort-row { width: auto !important; justify-content: flex-start !important; gap: 8px !important; }
+       /* Reduce prayer nav button size in landscape */
+       .prayer-nav-button {
+         width: 32px !important;
+         height: 32px !important;
+         border-radius: 16px !important;
+         font-size: 16px !important;
+       }
+       /* Reduce spacing between card and nav buttons in landscape */
+       .prayer-nav-area {
+         padding-top: 0px !important;
+         padding-bottom: 4px !important;
+       }
+       /* Reduce gap between nav buttons in landscape */
+       .prayer-nav-area > div:first-child {
+         gap: 16px !important;
+         margin-top: 8px !important;
+       }
+       /* Reduce card bottom padding in landscape to maximize space */
+       .landscape-only.card-content-scrollable {
+         padding-bottom: 0px !important;
+       }
+       /* Reduce prayer view container bottom padding in landscape */
+       .prayer-view-container {
+         padding-bottom: 4px !important;
+       }
+        /* Reduce calendar size in landscape */
+        .landscape-left .calendar {
+          padding: 22px !important;
+        }
+       .landscape-left .calendar-header {
+         margin-bottom: 12px !important;
+       }
+       .landscape-left .calendar-grid {
+         gap: 4px !important;
+       }
+       .landscape-left .calendar-day {
+         padding: 6px 2px !important;
+         font-size: 13px !important;
+         border-radius: 6px !important;
+       }
+       .landscape-left .calendar-day-header {
+         font-size: 11px !important;
+         padding: 4px 2px !important;
+       }
+       .landscape-left .nav-button {
+         font-size: 16px !important;
+         padding: 4px 8px !important;
+       }
      }
      /* Ensure desktop shows portrait layout */
      @media (min-width: 1024px) {
@@ -971,6 +1044,7 @@
       const [nameInput, setNameInput] = useState('');
       const [editingName, setEditingName] = useState(false);
       const [editNameInput, setEditNameInput] = useState('');
+      const [searchTerm, setSearchTerm] = useState('');
       const [dataModalOpen, setDataModalOpen] = useState(false);
       const [dataModalStep, setDataModalStep] = useState('main'); // 'main', 'confirmUpload'
       const [pendingUploadData, setPendingUploadData] = useState(null);
@@ -1016,6 +1090,10 @@
       const DATA_VERSION = 1;
       const [cardScrollState, setCardScrollState] = useState({ canScrollDown: false, canScrollUp: false });
       const cardScrollRef = React.useRef(null);
+      const [cardContentScrollState, setCardContentScrollState] = useState({ canScrollDown: false, canScrollUp: false, needsScroll: false });
+      const cardContentScrollRef = React.useRef(null);
+      const cardContentScrollRefPortrait = React.useRef(null);
+      const cardContentScrollRefLandscape = React.useRef(null);
 
       // "Morning Prayer" - warm parchment, golden hour glow
       const colors = {
@@ -1098,11 +1176,12 @@
         emptyState: { textAlign: 'center', color: colors.textSecondary, padding: '60px 20px', fontSize: '16px', lineHeight: '1.6' },
         sortRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '12px' },
         sortDropdown: { position: 'relative', marginBottom: '12px' },
-        sortTrigger: { padding: '10px 14px', paddingRight: '32px', fontSize: '14px', background: colors.secondary, border: `1px solid ${colors.border}`, borderRadius: '10px', color: colors.text, fontWeight: '500', fontFamily: 'inherit', outline: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
+        sortTrigger: { padding: '10px 14px', paddingRight: '32px', fontSize: '14px', background: colors.secondary, border: `1px solid ${colors.border}`, borderRadius: '10px', color: colors.text, fontWeight: '500', fontFamily: 'inherit', outline: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', height: '42px', boxSizing: 'border-box' },
         sortMenu: { position: 'absolute', top: '100%', left: 0, marginTop: '4px', background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '12px', boxShadow: colors.cardShadow, overflow: 'hidden', zIndex: 100, minWidth: '160px' },
         sortOption: { padding: '12px 16px', fontSize: '14px', color: colors.text, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.15s ease' },
         sortOptionActive: { background: colors.primary + '20', color: colors.primary, fontWeight: '600' },
-        reverseBtn: { width: '42px', height: '42px', fontSize: '16px', background: colors.secondary, border: `1px solid ${colors.border}`, borderRadius: '10px', color: colors.text, fontWeight: '500', fontFamily: 'inherit', outline: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        reverseBtn: { width: '42px', height: '42px', fontSize: '16px', background: colors.secondary, border: `1px solid ${colors.border}`, borderRadius: '10px', color: colors.text, fontWeight: '500', fontFamily: 'inherit', outline: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', paddingBottom: '3px' },
+        searchInput: { flex: 1, height: '32px', padding: '0 14px', fontSize: '14px', background: colors.inputBg, border: `1px solid ${colors.border}`, borderRadius: '16px', color: colors.text, fontFamily: 'inherit', outline: 'none', margin: '0 12px', minWidth: '80px', maxWidth: '300px', boxSizing: 'border-box' },
         frequencyHeading: { fontSize: '11px', fontWeight: '700', color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: '1px', padding: '16px 0 8px 4px' },
         modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px', boxSizing: 'border-box' },
         modalContent: { background: colors.cardBgGradient || colors.cardBg, borderRadius: '20px', padding: '24px', maxWidth: '340px', width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,0.4)', border: `1px solid ${colors.border}` },
@@ -1333,6 +1412,182 @@
         const canScrollUp = el.scrollTop > 5;
         setCardScrollState({ canScrollDown, canScrollUp });
       };
+      
+      const checkCardContentScroll = () => {
+        // Check which ref is actually visible (not hidden by CSS)
+        let el = null;
+        
+        // Check portrait ref first
+        if (cardContentScrollRefPortrait.current) {
+          const style = window.getComputedStyle(cardContentScrollRefPortrait.current);
+          if (style.display !== 'none' && style.visibility !== 'hidden') {
+            el = cardContentScrollRefPortrait.current;
+          }
+        }
+        
+        // Check landscape ref if portrait not visible
+        if (!el && cardContentScrollRefLandscape.current) {
+          const style = window.getComputedStyle(cardContentScrollRefLandscape.current);
+          if (style.display !== 'none' && style.visibility !== 'hidden') {
+            el = cardContentScrollRefLandscape.current;
+          }
+        }
+        
+        // Fallback to single person card ref
+        if (!el && cardContentScrollRef.current) {
+          const style = window.getComputedStyle(cardContentScrollRef.current);
+          if (style.display !== 'none' && style.visibility !== 'hidden') {
+            el = cardContentScrollRef.current;
+          }
+        }
+        
+        // If refs not set, find the visible scrollable element by querying DOM
+        if (!el) {
+          const portraitEl = document.querySelector('.portrait-only.card-content-scrollable');
+          const landscapeEl = document.querySelector('.landscape-only.card-content-scrollable');
+          const singleEl = document.querySelector('.card-content-scrollable:not(.portrait-only):not(.landscape-only)');
+          
+          // Check which element is actually visible (not hidden by CSS)
+          if (portraitEl) {
+            const style = window.getComputedStyle(portraitEl);
+            if (style.display !== 'none' && style.visibility !== 'hidden') {
+              el = portraitEl;
+            }
+          }
+          if (!el && landscapeEl) {
+            const style = window.getComputedStyle(landscapeEl);
+            if (style.display !== 'none' && style.visibility !== 'hidden') {
+              el = landscapeEl;
+            }
+          }
+          if (!el && singleEl) {
+            const style = window.getComputedStyle(singleEl);
+            if (style.display !== 'none' && style.visibility !== 'hidden') {
+              el = singleEl;
+            }
+          }
+        }
+        
+        if (!el) return;
+        const scrollThreshold = 10; // Threshold for detecting scroll position
+        const needsScroll = el.scrollHeight > el.clientHeight + scrollThreshold;
+        const canScrollDown = needsScroll && el.scrollTop < el.scrollHeight - el.clientHeight - scrollThreshold;
+        const canScrollUp = el.scrollTop > scrollThreshold;
+        setCardContentScrollState({ canScrollDown, canScrollUp, needsScroll });
+      };
+      
+      const getScrollableElement = () => {
+        // Check which ref is actually visible (not hidden by CSS)
+        let el = null;
+        
+        // Check portrait ref first
+        if (cardContentScrollRefPortrait.current) {
+          const style = window.getComputedStyle(cardContentScrollRefPortrait.current);
+          if (style.display !== 'none' && style.visibility !== 'hidden') {
+            el = cardContentScrollRefPortrait.current;
+          }
+        }
+        
+        // Check landscape ref if portrait not visible
+        if (!el && cardContentScrollRefLandscape.current) {
+          const style = window.getComputedStyle(cardContentScrollRefLandscape.current);
+          if (style.display !== 'none' && style.visibility !== 'hidden') {
+            el = cardContentScrollRefLandscape.current;
+          }
+        }
+        
+        // Fallback to single person card ref
+        if (!el && cardContentScrollRef.current) {
+          const style = window.getComputedStyle(cardContentScrollRef.current);
+          if (style.display !== 'none' && style.visibility !== 'hidden') {
+            el = cardContentScrollRef.current;
+          }
+        }
+        
+        // If refs not set, find the visible scrollable element by querying DOM
+        if (!el) {
+          const portraitEl = document.querySelector('.portrait-only.card-content-scrollable');
+          const landscapeEl = document.querySelector('.landscape-only.card-content-scrollable');
+          const singleEl = document.querySelector('.card-content-scrollable:not(.portrait-only):not(.landscape-only)');
+          
+          // Check which element is actually visible (not hidden by CSS)
+          if (portraitEl) {
+            const style = window.getComputedStyle(portraitEl);
+            if (style.display !== 'none' && style.visibility !== 'hidden') {
+              el = portraitEl;
+            }
+          }
+          if (!el && landscapeEl) {
+            const style = window.getComputedStyle(landscapeEl);
+            if (style.display !== 'none' && style.visibility !== 'hidden') {
+              el = landscapeEl;
+            }
+          }
+          if (!el && singleEl) {
+            const style = window.getComputedStyle(singleEl);
+            if (style.display !== 'none' && style.visibility !== 'hidden') {
+              el = singleEl;
+            }
+          }
+        }
+        
+        return el;
+      };
+      
+      const scrollCardContentToBottom = () => {
+        const el = getScrollableElement();
+        if (!el) return;
+        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+        setTimeout(() => checkCardContentScroll(), 300);
+      };
+      
+      const scrollCardContentToTop = () => {
+        const el = getScrollableElement();
+        if (!el) return;
+        el.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => checkCardContentScroll(), 300);
+      };
+      
+      React.useEffect(() => {
+        // Check scroll state when card changes - run multiple times to catch DOM updates
+        const check = () => {
+          checkCardContentScroll();
+        };
+        // Immediate check
+        check();
+        // Check after a short delay for DOM to settle
+        const timeout1 = setTimeout(check, 100);
+        // Check after a longer delay to catch any async rendering
+        const timeout2 = setTimeout(check, 300);
+        // Check one more time after a longer delay
+        const timeout3 = setTimeout(check, 500);
+        return () => {
+          clearTimeout(timeout1);
+          clearTimeout(timeout2);
+          clearTimeout(timeout3);
+        };
+      }, [currentCardIndex, screen]);
+      
+      // Also check when card content is rendered (using MutationObserver as fallback)
+      React.useEffect(() => {
+        const observer = new MutationObserver(() => {
+          setTimeout(() => checkCardContentScroll(), 50);
+        });
+        const target = document.querySelector('.card-content-scrollable');
+        if (target) {
+          observer.observe(target, { childList: true, subtree: true, attributes: true });
+        }
+        return () => observer.disconnect();
+      }, [currentCardIndex]);
+      
+      // Also check when window resizes
+      React.useEffect(() => {
+        const handleResize = () => {
+          setTimeout(() => checkCardContentScroll(), 100);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
       
       React.useEffect(() => {
         checkCardScroll();
@@ -1701,6 +1956,41 @@
         return sortReversed ? sorted.reverse() : sorted;
       };
       const getSortedCards = () => [...cards].filter(c => c.isGroup).sort((a, b) => cardSortBy === 'name' ? a.name.localeCompare(b.name) : 0);
+      
+      // Search filter functions
+      const filterPeopleBySearch = (peopleList) => {
+        if (!searchTerm.trim()) return peopleList;
+        const term = searchTerm.toLowerCase();
+        return peopleList.filter(p => {
+          const firstName = (p.firstName || '').toLowerCase();
+          const lastName = (p.lastName || '').toLowerCase();
+          const organisation = (p.organisation || '').toLowerCase();
+          const card = cards.find(c => c.peopleIds.includes(p.id));
+          const groupName = (card?.name || '').toLowerCase();
+          return firstName.includes(term) || lastName.includes(term) || 
+                 organisation.includes(term) || groupName.includes(term);
+        });
+      };
+      
+      const filterCardsBySearch = (cardsList) => {
+        if (!searchTerm.trim()) return cardsList;
+        const term = searchTerm.toLowerCase();
+        return cardsList.filter(c => {
+          const cardName = (c.name || '').toLowerCase();
+          // Also search people in the card
+          const peopleInCard = c.peopleIds.map(id => people.find(p => p.id === id)).filter(Boolean);
+          const peopleMatch = peopleInCard.some(p => 
+            (p.firstName || '').toLowerCase().includes(term) ||
+            (p.lastName || '').toLowerCase().includes(term) ||
+            (p.organisation || '').toLowerCase().includes(term)
+          );
+          return cardName.includes(term) || peopleMatch;
+        });
+      };
+      
+      const getFilteredSortedPeople = () => filterPeopleBySearch(getSortedPeople());
+      const getFilteredSortedCards = () => filterCardsBySearch(getSortedCards());
+      
       const getPrayerCountThisMonth = (pid) => { 
         const p = people.find(x => x.id === pid); 
         if (!p) return 0; 
@@ -1770,7 +2060,7 @@
                   {/* Grouped children row */}
                   {hasGroupedItems && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', marginTop: '6px' }} onClick={() => toggleCheckbox(cardId, '_group')}>
-                      <span style={{ width: '20px', height: '20px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', color: '#FFF', background: checked['_group'] ? colors.accentGradient : colors.checkboxBg }}>{checked['_group'] && '✓'}</span>
+                      <span style={{ width: '22px', height: '22px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700', color: '#FFF', background: checked['_group'] ? colors.accentGradient : colors.checkboxBg }}>{checked['_group'] && '✓'}</span>
                       <span style={{ fontSize: '14px', fontWeight: '500', color: colors.textSecondary }}>
                         {groupedPeople.map(p => p.firstName).join(', ')}
                         {groupedPeople.length > 0 && card.includeUnnamedChildren ? ' and others' : ''}
@@ -1790,20 +2080,20 @@
         
         // Fixed sizes that work in both portrait and landscape
         const adultCheckboxSize = '36px';
-        const childCheckboxSize = '28px';
+        const childCheckboxSize = '36px'; // Same as adult
         const adultFontSize = 'clamp(20px, 6vw, 28px)';
         const childFontSize = 'clamp(16px, 5vw, 22px)';
         const adultIndent = '52px'; // 36px checkbox + 16px margin
-        const childIndent = '44px'; // 28px checkbox + 16px margin
+        const childIndent = '52px'; // Same as adult (36px checkbox + 16px margin)
         
         const renderName = (person, isChild = false) => {
           const isOrg = !person.firstName && !person.lastName && person.organisation;
           const name = isOrg ? person.organisation : (isChild ? person.firstName : `${person.firstName} ${person.lastName}`.trim());
           const isChecked = person.individualCheckbox ? (checked[person.id] || false) : (checked['_group'] || false);
           const nameFontSize = isChild ? childFontSize : adultFontSize;
-          const checkboxSize = isChild ? childCheckboxSize : adultCheckboxSize;
-          const checkFontSize = isChild ? '14px' : '18px';
-          const contentIndent = isChild ? childIndent : adultIndent;
+          const checkboxSize = adultCheckboxSize; // All checkboxes same size
+          const checkFontSize = '18px'; // All checkboxes same font size
+          const contentIndent = adultIndent; // All same indent
           return (
             <div key={person.id} style={{ marginBottom: '8px' }}>
               <div style={{ ...styles.nameRow, justifyContent: nameAlign }} onClick={() => toggleCheckbox(cardId, person.individualCheckbox ? person.id : '_group')}>
@@ -1832,7 +2122,12 @@
           return (
             <div style={cardStyle}>
               <div style={styles.cardHeaderRow}><div></div><div style={styles.cardFrequency}>{freq}</div></div>
-              <div style={styles.singlePersonContent}>
+              <div 
+                ref={cardContentScrollRef}
+                onScroll={checkCardContentScroll}
+                className="card-content-scrollable" 
+                style={{ ...styles.singlePersonContent, minHeight: 0, overflowY: 'auto', position: 'relative' }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                   <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => toggleCheckbox(cardId, p.individualCheckbox ? p.id : '_group')}>
                     <span style={{ ...styles.nameCheckbox, width: singleCheckboxSize, height: singleCheckboxSize, minWidth: singleCheckboxSize, minHeight: singleCheckboxSize, fontSize: '24px', background: isChecked ? colors.accentGradient : colors.checkboxBg, boxShadow: isChecked ? '0 3px 12px rgba(110,196,159,0.5)' : 'none' }}>{isChecked && '✓'}</span>
@@ -1841,6 +2136,40 @@
                   {p.organisation && !isOrg && <div style={{ fontSize: '16px', color: colors.textSecondary, fontStyle: 'italic', marginTop: '4px', marginLeft: singleNameIndent }}>{p.organisation}</div>}
                   {prayerText && <div style={{ marginTop: '12px', marginLeft: singleNameIndent }}>{renderPrayerPoints(prayerText, false)}</div>}
                 </div>
+                {cardContentScrollState.needsScroll && (
+                  <button
+                    onClick={cardContentScrollState.canScrollDown ? scrollCardContentToBottom : scrollCardContentToTop}
+                    style={{
+                      position: 'sticky',
+                      bottom: '4px',
+                      right: '4px',
+                      width: '32px',
+                      height: '32px',
+                      minWidth: '32px',
+                      minHeight: '32px',
+                      maxWidth: '32px',
+                      maxHeight: '32px',
+                      borderRadius: '50%',
+                      background: colors.cardBgGradient || colors.cardBg,
+                      border: `1px solid ${colors.border}`,
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: colors.text,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      zIndex: 10,
+                      marginLeft: 'auto',
+                      marginTop: 'auto',
+                      alignSelf: 'flex-end',
+                      padding: 0,
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    {cardContentScrollState.canScrollDown ? '▼' : '▲'}
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -1862,7 +2191,7 @@
           return (
             <div style={{ marginBottom: '8px' }}>
               <div style={{ ...styles.nameRow, justifyContent: nameAlign }} onClick={() => toggleCheckbox(cardId, '_group')}>
-                <span style={{ ...styles.nameCheckbox, width: childCheckboxSize, height: childCheckboxSize, minWidth: childCheckboxSize, minHeight: childCheckboxSize, fontSize: '14px', background: isChecked ? colors.accentGradient : colors.checkboxBg, boxShadow: isChecked ? '0 2px 10px rgba(110,196,159,0.5)' : 'none' }}>{isChecked && '✓'}</span>
+                <span style={{ ...styles.nameCheckbox, width: adultCheckboxSize, height: adultCheckboxSize, minWidth: adultCheckboxSize, minHeight: adultCheckboxSize, fontSize: '18px', background: isChecked ? colors.accentGradient : colors.checkboxBg, boxShadow: isChecked ? '0 2px 10px rgba(110,196,159,0.5)' : 'none' }}>{isChecked && '✓'}</span>
                 <span style={{ fontSize: childFontSize, fontWeight: '600', marginLeft: '16px', color: colors.textSecondary, whiteSpace: 'nowrap' }}>{label}</span>
               </div>
             </div>
@@ -1874,9 +2203,9 @@
           const isOrg = !person.firstName && !person.lastName && person.organisation;
           const name = isOrg ? person.organisation : (isChild ? person.firstName : `${person.firstName} ${person.lastName}`.trim());
           const isChecked = person.individualCheckbox ? (checked[person.id] || false) : (checked['_group'] || false);
-          const compactCheckboxSize = isChild ? '22px' : '26px';
+          const compactCheckboxSize = '26px'; // All checkboxes same size
           const compactFontSize = isChild ? '14px' : '16px';
-          const checkFontSize = isChild ? '11px' : '13px';
+          const checkFontSize = '13px'; // All checkboxes same font size
           return (
             <div key={person.id} style={{ marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => toggleCheckbox(cardId, person.individualCheckbox ? person.id : '_group')}>
@@ -1909,7 +2238,7 @@
           }
           return (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: '6px' }} onClick={() => toggleCheckbox(cardId, '_group')}>
-              <span style={{ ...styles.nameCheckbox, width: '22px', height: '22px', minWidth: '22px', minHeight: '22px', fontSize: '11px', background: isChecked ? colors.accentGradient : colors.checkboxBg, boxShadow: isChecked ? '0 2px 8px rgba(110,196,159,0.4)' : 'none' }}>{isChecked && '✓'}</span>
+              <span style={{ ...styles.nameCheckbox, width: '26px', height: '26px', minWidth: '26px', minHeight: '26px', fontSize: '13px', background: isChecked ? colors.accentGradient : colors.checkboxBg, boxShadow: isChecked ? '0 2px 8px rgba(110,196,159,0.4)' : 'none' }}>{isChecked && '✓'}</span>
               <span style={{ fontSize: '14px', fontWeight: '600', color: colors.textSecondary, whiteSpace: 'nowrap' }}>{label}</span>
             </div>
           );
@@ -1923,8 +2252,14 @@
             <div className="card-header-row" style={styles.cardHeaderRow}><div style={styles.cardTitle}>{card.name}</div><div style={styles.cardFrequency}>{freq}</div></div>
             
             {/* Portrait layout - original with prayer points under each name */}
-            <div className="portrait-only" style={{ flexDirection: 'column', padding: '12px 0', flex: 1, justifyContent: 'center' }}>
+            <div 
+              ref={cardContentScrollRefPortrait}
+              onScroll={checkCardContentScroll}
+              className="portrait-only card-content-scrollable" 
+              style={{ flexDirection: 'column', padding: '12px 0', flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative' }}
+            >
               {card.prayerPoint && <div style={{ marginBottom: '12px', marginLeft: adultIndent }}>{renderPrayerPoints(card.prayerPoint, false)}</div>}
+              {card.prayerPoint && <div style={styles.childrenDivider}></div>}
               <div>
                 {individualAdults.map(p => renderName(p, false))}
               </div>
@@ -1938,28 +2273,119 @@
                 </>
               )}
               {hasGroupedRow && !hasChildrenSection && renderGroupedRow()}
+              {cardContentScrollState.needsScroll && (
+                <button
+                  onClick={cardContentScrollState.canScrollDown ? scrollCardContentToBottom : scrollCardContentToTop}
+                  style={{
+                    position: 'sticky',
+                    bottom: '8px',
+                    right: '4px',
+                    width: '32px',
+                    height: '32px',
+                    minWidth: '32px',
+                    minHeight: '32px',
+                    maxWidth: '32px',
+                    maxHeight: '32px',
+                    borderRadius: '50%',
+                    background: colors.cardBgGradient || colors.cardBg,
+                    border: `1px solid ${colors.border}`,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: colors.text,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    zIndex: 10,
+                    padding: 0,
+                    boxSizing: 'border-box',
+                    marginLeft: 'auto',
+                    marginTop: 'auto',
+                    alignSelf: 'flex-end'
+                  }}
+                >
+                  {cardContentScrollState.canScrollDown ? '▼' : '▲'}
+                </button>
+              )}
             </div>
             
             {/* Landscape layout - 3 columns with prayer points under each name */}
-            <div className="landscape-only" style={{ flexDirection: 'column', paddingBottom: '12px', flex: 1, justifyContent: 'center' }}>
-              {card.prayerPoint && <div style={{ marginBottom: '6px', fontSize: '12px', color: colors.textSecondary, fontStyle: 'italic' }}>{renderPrayerPoints(card.prayerPoint, false)}</div>}
+            <div 
+              ref={cardContentScrollRefLandscape}
+              onScroll={checkCardContentScroll}
+              className="landscape-only card-content-scrollable" 
+              style={{ flexDirection: 'column', paddingBottom: '4px', flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative' }}
+            >
+              {card.prayerPoint && (() => {
+                const points = card.prayerPoint.split('\n').filter(p => p.trim());
+                if (points.length === 0) return null;
+                const compactCheckboxSize = '26px';
+                const prayerPointIndent = `calc(${compactCheckboxSize} + 8px)`;
+                return (
+                  <div style={{ marginBottom: '6px', fontSize: '12px', color: colors.textSecondary, fontStyle: 'italic' }}>
+                    <div className="three-column-grid" style={{ gap: '4px 8px' }}>
+                      {points.map((point, i) => (
+                        <div key={i} style={{ display: 'flex', gap: '4px', paddingLeft: prayerPointIndent }}>
+                          <span style={{ color: colors.textTertiary }}>•</span>
+                          <span>{point}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              {card.prayerPoint && <div style={{ ...styles.childrenDivider, width: '100%', flexShrink: 0 }}></div>}
               <div className="three-column-grid">
                 {individualAdults.map(p => renderCompactName(p, false))}
               </div>
-              {(individualChildren.length > 0 || (hasGroupedRow && children.length > 0) || card.includeUnnamedChildren) && (
+              {hasChildrenSection && (
                 <>
-                  <div style={styles.childrenDivider}></div>
+                  <div style={{ ...styles.childrenDivider, width: '100%', flexShrink: 0 }}></div>
                   <div className="three-column-grid">
                     {individualChildren.map(c => renderCompactName(c, true))}
                     {hasGroupedRow && renderCompactGroupedRow()}
                   </div>
                 </>
               )}
-              {hasGroupedRow && !hasChildrenSection && !children.length && !card.includeUnnamedChildren && renderCompactGroupedRow()}
+              {hasGroupedRow && !hasChildrenSection && renderCompactGroupedRow()}
+              {cardContentScrollState.needsScroll && (
+                <button
+                  onClick={cardContentScrollState.canScrollDown ? scrollCardContentToBottom : scrollCardContentToTop}
+                  style={{
+                    position: 'sticky',
+                    bottom: '8px',
+                    right: '4px',
+                    width: '32px',
+                    height: '32px',
+                    minWidth: '32px',
+                    minHeight: '32px',
+                    maxWidth: '32px',
+                    maxHeight: '32px',
+                    borderRadius: '50%',
+                    background: colors.cardBgGradient || colors.cardBg,
+                    border: `1px solid ${colors.border}`,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: colors.text,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    zIndex: 10,
+                    padding: 0,
+                    boxSizing: 'border-box',
+                    marginLeft: 'auto',
+                    marginTop: 'auto',
+                    alignSelf: 'flex-end'
+                  }}
+                >
+                  {cardContentScrollState.canScrollDown ? '▼' : '▲'}
+                </button>
+              )}
             </div>
           </div>
-        );
-      };
+          );
+        };
 
       const renderModal = () => {
         if (!modal) return null;
@@ -2278,6 +2704,7 @@
                   <li><strong>Tap checkboxes</strong> to mark prayers as complete</li>
                   <li>Completed cards are removed from rotation when you swipe away</li>
                   <li>Tap <strong>"List"</strong> to see all today's prayers at once</li>
+                  <li>If a card has more content than fits, a <strong>scroll button</strong> (▼/▲) appears in the bottom-right corner - tap it to scroll to the bottom or top</li>
                 </ul>
                 <div className="help-tip">Tip: Your progress is saved automatically - you can close and return anytime!</div>
               </>
@@ -2290,10 +2717,11 @@
               <>
                 <p>Use the bottom navigation to access:</p>
                 <ul>
-                  <li><strong>Manage:</strong> Edit, delete, or deactivate people and groups</li>
-                  <li><strong>History:</strong> View your prayer history by person or group</li>
+                  <li><strong>People & Groups:</strong> Edit, delete, or deactivate people and groups. Use the sorting controls to organize by name or date added.</li>
+                  <li><strong>Prayer History:</strong> View your prayer history by person or group. Use sorting controls to organize the list.</li>
                 </ul>
-                <p>Tap any person or group to see details. In History, you can view a calendar showing which days you prayed and what prayer points were used.</p>
+                <p>Tap any person or group to see details. In History, you can view a calendar showing which days you prayed and what prayer points were used. Tap a date on the calendar to see the prayer points for that day.</p>
+                <div className="help-tip">Tip: In landscape mode, sorting controls move to the right side of the screen for easier access.</div>
               </>
             )
           },
@@ -2365,7 +2793,7 @@
         return (
           <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
             <div className="app-header">
-              <button style={styles.btnText} onClick={() => setHelpOpen(false)}>← Back</button>
+              <button style={styles.btnText} onClick={() => setHelpOpen(false)}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button>
             </div>
             <div className="page-title">How to Use</div>
             <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '100px' }}>
@@ -2403,34 +2831,44 @@
               <button className={`home-circle-btn ${demoMode ? 'active' : ''}`} onClick={toggleDemoMode} title="Demo Mode">D</button>
             </div>
             
-            {/* Greeting - now below buttons */}
+            {/* Greeting - portrait only */}
             {(() => {
-              const greetingText = showContinue ? 'Welcome back' : getGreeting(userName || 'Friend');
-              // Adjust font size based on text length to prevent line breaks
+              const greetingText = showContinue ? `Welcome back, ${userName || 'Friend'}` : getGreeting(userName || 'Friend');
+              // Adjust font size based on text length to prevent line breaks, then increase by 50%
               const greetingLength = greetingText.length;
-              const greetingFontSize = greetingLength > 24 ? '18px' : greetingLength > 20 ? '20px' : greetingLength > 16 ? '22px' : '24px';
-              const landscapeFontSize = greetingLength > 24 ? '16px' : greetingLength > 20 ? '17px' : greetingLength > 16 ? '18px' : '20px';
+              const baseFontSize = greetingLength > 24 ? 18 : greetingLength > 20 ? 20 : greetingLength > 16 ? 22 : 24;
+              const greetingFontSize = `${Math.round(baseFontSize * 1.5)}px`;
+              const baseLandscapeSize = greetingLength > 24 ? 16 : greetingLength > 20 ? 17 : greetingLength > 16 ? 18 : 20;
+              const landscapeFontSize = `${Math.round(baseLandscapeSize * 1.5)}px`;
               return (
-                <>
-                  <div className="home-greeting" style={{ textAlign: 'center', marginBottom: '8px' }}>
-                    <div className="home-welcome" style={{ ...styles.greeting, fontSize: greetingFontSize, marginTop: 0, marginBottom: '2px', whiteSpace: 'nowrap' }}>
+                <div className="home-greeting portrait-only" style={{ textAlign: 'center', marginBottom: '8px', padding: '0 20px', position: 'relative' }}>
+                  <div className="home-welcome" style={{ ...styles.greeting, fontSize: greetingFontSize, marginTop: 0, marginBottom: '2px', whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    {greetingText}
+                    <button className="edit-name-btn" onClick={openEditName} title="Edit name" style={{ marginLeft: '0', verticalAlign: 'middle' }}>✎</button>
+                  </div>
+                  <div className="home-subtext" style={{ ...styles.subGreeting, fontSize: '14px', marginBottom: '0' }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
+                </div>
+              );
+            })()}
+            
+            {/* Landscape header row - welcome and prayer count */}
+            {(() => {
+              const greetingText = showContinue ? `Welcome back, ${userName || 'Friend'}` : getGreeting(userName || 'Friend');
+              const greetingLength = greetingText.length;
+              const baseLandscapeSize = greetingLength > 24 ? 16 : greetingLength > 20 ? 17 : greetingLength > 16 ? 18 : 20;
+              const landscapeFontSize = `${Math.round(baseLandscapeSize * 1.5)}px`;
+              return (
+                <div className="landscape-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '16px', padding: '0 20px' }}>
+                  <div style={{ flex: '0 0 auto', width: 'calc(50% - 1px)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div className="home-welcome" style={{ fontSize: landscapeFontSize, whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       {greetingText}
-                      <button className="edit-name-btn" onClick={openEditName} title="Edit name">✎</button>
-                    </div>
-                    <div className="home-subtext" style={{ ...styles.subGreeting, fontSize: '14px', marginBottom: '0' }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
-                  </div>
-                  
-                  {/* Header row for landscape - greeting */}
-                  <div className="home-header-row" style={{ display: 'none', paddingTop: '4px', marginBottom: '8px' }}>
-                    <div className="home-greeting-text">
-                      <span style={{ fontSize: landscapeFontSize, fontWeight: '700', color: colors.text, whiteSpace: 'nowrap' }}>
-                        {greetingText}
-                        <button className="edit-name-btn" onClick={openEditName} title="Edit name">✎</button>
-                      </span>
-                      <span style={{ fontSize: '14px', color: colors.textSecondary }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</span>
+                      <button className="edit-name-btn" onClick={openEditName} title="Edit name" style={{ marginLeft: '0', verticalAlign: 'middle' }}>✎</button>
                     </div>
                   </div>
-                </>
+                  <div style={{ flex: '1', display: 'flex', justifyContent: 'center', alignItems: 'center', paddingLeft: '24px' }}>
+                    <div style={{ fontSize: '14px', color: colors.textSecondary }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
+                  </div>
+                </div>
               );
             })()}
             
@@ -2439,7 +2877,7 @@
               {/* Left column: Start button only in landscape */}
               <div className="home-left">
                 {/* Spacer to push content down (portrait only) */}
-                <div className="home-spacer-top" style={{ flex: '0 0 auto', minHeight: '8px', maxHeight: '20px' }} />
+                <div className="home-spacer-top portrait-only" style={{ flex: '0 0 auto', minHeight: '8px', maxHeight: '20px' }} />
                 
 {/* Circular Start Praying button */}
                  <div className="home-start-btn-wrapper home-start-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '16px 0', marginBottom: '16px' }}>
@@ -2550,14 +2988,19 @@
                    background: 'transparent',
                    border: 'none',
                    borderRight: `1px solid ${colors.border}`,
-                   color: colors.textSecondary,
+                   color: colors.primary,
                    cursor: 'pointer',
                    fontFamily: 'inherit',
-                   whiteSpace: 'nowrap'
+                   whiteSpace: 'nowrap',
+                   display: 'flex',
+                   flexDirection: 'column',
+                   alignItems: 'center',
+                   gap: '4px'
                  }} 
                  onClick={() => setScreen('manage')}
                >
-                 Manage People & Groups
+                 <span className="portrait-only" style={{ fontSize: '22px', lineHeight: '1', fontWeight: 'normal' }}>⚬⚬</span>
+                 <span>People & Groups</span>
                </button>
                <button 
                  style={{
@@ -2568,14 +3011,19 @@
                    fontWeight: '600',
                    background: 'transparent',
                    border: 'none',
-                   color: colors.textSecondary,
+                   color: colors.primary,
                    cursor: 'pointer',
                    fontFamily: 'inherit',
-                   whiteSpace: 'nowrap'
+                   whiteSpace: 'nowrap',
+                   display: 'flex',
+                   flexDirection: 'column',
+                   alignItems: 'center',
+                   gap: '4px'
                  }} 
                  onClick={() => setScreen('stats')}
                >
-                 Prayer History
+                 <span className="portrait-only" style={{ fontSize: '22px', lineHeight: '1', fontWeight: 'normal' }}>↻</span>
+                 <span>Prayer History</span>
                </button>
              </div>
              
@@ -2675,7 +3123,7 @@
         if (showList) return (
           <div className="app-container" style={styles.container}>
             <div className="app-header">
-              <button style={styles.btnText} onClick={() => setScreen('home')}>← Home</button>
+              <button style={styles.btnText} onClick={() => setScreen('home')}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Home</button>
               {!allDone && <button style={styles.btnText} onClick={() => setSession(s => ({ ...s, currentView: 'flashcard' }))}>Cards</button>}
             </div>
             <div className="page-title">{allDone ? 'All prayers complete' : "Today's Prayers"}</div>
@@ -2704,7 +3152,7 @@
         return (
           <div className="prayer-view-container" style={{ fontFamily: "'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif", background: colors.bgGradient, color: colors.text, margin: '0 auto', maxWidth: 'none', width: '100%' }}>
             <div className="app-header" style={{ flexShrink: 0 }}>
-              <button style={styles.btnText} onClick={() => setScreen('home')}>← Home</button>
+              <button style={styles.btnText} onClick={() => setScreen('home')}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Home</button>
               <button style={styles.btnText} onClick={() => setSession(s => ({ ...s, currentView: 'list' }))}>List</button>
             </div>
             <div 
@@ -2725,10 +3173,10 @@
             </div>
             <div className="prayer-nav-area">
               <div style={styles.swipeButtons}>
-                <button style={noMoreIncomplete ? disabledBtnStyle : styles.swipeButton} onClick={noMoreIncomplete ? undefined : swipePrev} disabled={noMoreIncomplete}>‹</button>
-                <button style={noMoreIncomplete ? disabledBtnStyle : styles.swipeButton} onClick={noMoreIncomplete ? undefined : swipeNext} disabled={noMoreIncomplete}>›</button>
+                <button className="prayer-nav-button" style={noMoreIncomplete ? disabledBtnStyle : styles.swipeButton} onClick={noMoreIncomplete ? undefined : swipePrev} disabled={noMoreIncomplete}>‹</button>
+                <button className="prayer-nav-button" style={noMoreIncomplete ? disabledBtnStyle : styles.swipeButton} onClick={noMoreIncomplete ? undefined : swipeNext} disabled={noMoreIncomplete}>›</button>
               </div>
-              <div style={styles.swipeHint}>{hintText} · swipe or use arrows</div>
+              <div className="portrait-only" style={styles.swipeHint}>{hintText} · swipe or use arrows</div>
             </div>
           </div>
         );
@@ -2737,8 +3185,10 @@
       const renderManage = () => {
         const renderPeopleList = () => {
           if (!people.length) return <div style={styles.emptyState}>No people yet. Tap + to add.</div>;
+          const filtered = getFilteredSortedPeople();
+          if (searchTerm && !filtered.length) return <div style={styles.emptyState}>No results for "{searchTerm}"</div>;
           return (() => {
-              const sorted = getSortedPeople();
+              const sorted = filtered;
               const listItemStyle = { ...styles.listItem, marginBottom: 0 };
               
               if (sortBy !== 'frequency') {
@@ -2800,8 +3250,10 @@
         
         const renderGroupsList = () => {
           if (!getSortedCards().length) return <div style={styles.emptyState}>No groups yet.<br/>Use "Create Group" to combine people.</div>;
+          const filteredCards = getFilteredSortedCards();
+          if (searchTerm && !filteredCards.length) return <div style={styles.emptyState}>No results for "{searchTerm}"</div>;
           return (() => {
-              const sortedCards = getSortedCards();
+              const sortedCards = filteredCards;
               const listItemStyle = { ...styles.listItem, marginBottom: 0 };
               
               if (cardSortBy !== 'frequency') {
@@ -2850,10 +3302,10 @@
         
         const renderSortControls = (isPeople = true) => (
           <div className="sort-row" style={{ ...styles.sortRow, marginBottom: 0 }}>
-            <div style={styles.sortDropdown}>
+            <div style={{ ...styles.sortDropdown, marginBottom: 0 }}>
               <button style={styles.sortTrigger} onClick={() => setSortDropdownOpen(o => !o)}>
                 {isPeople 
-                  ? (sortBy === 'firstName' ? 'First Name' : sortBy === 'lastName' ? 'Last Name' : 'Frequency')
+                  ? (sortBy === 'lastName' ? 'Last Name' : sortBy === 'firstName' ? 'First Name' : 'Frequency')
                   : (cardSortBy === 'name' ? 'Name' : 'Frequency')
                 }
                 <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>▼</span>
@@ -2863,7 +3315,7 @@
                   <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setSortDropdownOpen(false)} />
                   <div style={styles.sortMenu}>
                     {(isPeople 
-                      ? [{ value: 'firstName', label: 'First Name' }, { value: 'lastName', label: 'Last Name' }, { value: 'frequency', label: 'Frequency' }]
+                      ? [{ value: 'lastName', label: 'Last Name' }, { value: 'firstName', label: 'First Name' }, { value: 'frequency', label: 'Frequency' }]
                       : [{ value: 'name', label: 'Name' }, { value: 'frequency', label: 'Frequency' }]
                     ).map(opt => (
                       <div 
@@ -2886,7 +3338,14 @@
         return (
           <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
             <div className="app-header">
-              <button style={styles.btnText} onClick={() => setScreen('home')}>← Back</button>
+              <button style={styles.btnText} onClick={() => { setSearchTerm(''); setScreen('home'); }}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button>
+              <input 
+                style={styles.searchInput} 
+                type="text" 
+                placeholder="Search..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
               {manageTab === 'people' && <button style={styles.btnText} onClick={() => setEditingPerson({})}>+ Add</button>}
               {manageTab === 'cards' && <button style={styles.btnText} onClick={() => setScreen('createGroup')}>+ Add</button>}
             </div>
@@ -2897,24 +3356,26 @@
                 <button style={{ ...styles.tab, ...(manageTab === 'people' ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setManageTab('people')}>People</button>
                 <button style={{ ...styles.tab, ...(manageTab === 'cards' ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setManageTab('cards')}>Groups</button>
               </div>
-              {renderSortControls(manageTab === 'people')}
+              <div style={{ marginBottom: '12px' }}>
+                {renderSortControls(manageTab === 'people')}
+              </div>
             </div>
             
             {/* Landscape: Tabs left, sorting right - same row */}
             <div className="landscape-only">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', gap: '12px', width: '100%' }}>
                 <div style={{ ...styles.tabs, flex: '0 0 auto', width: '280px', marginBottom: 0 }}>
                   <button style={{ ...styles.tab, ...(manageTab === 'people' ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setManageTab('people')}>People</button>
                   <button style={{ ...styles.tab, ...(manageTab === 'cards' ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setManageTab('cards')}>Groups</button>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', flex: '0 0 auto' }}>
                   {renderSortControls(manageTab === 'people')}
                 </div>
               </div>
             </div>
             
             {/* 2-column grid list */}
-            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 6px', margin: '0 -6px' }}>
+            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 4px 6px', margin: '0 -6px' }}>
               {manageTab === 'people' ? renderPeopleList() : renderGroupsList()}
             </div>
           </div>
@@ -3058,21 +3519,31 @@
         const create = () => { if (!groupForm.name.trim()) { alert('Name required'); return; } createGroup({ ...groupForm, peopleIds: selectedPeopleForGroup, checkboxOverrides }); setSelectedPeopleForGroup([]); setScreen('home'); };
         if (groupStep === 1) return (
           <div className="app-container" style={styles.container}>
-            <div className="app-header"><button style={styles.btnText} onClick={() => { setSelectedPeopleForGroup([]); setScreen('home'); }}>Cancel</button><button style={{ ...styles.btnText, opacity: selectedPeopleForGroup.length < 2 ? 0.4 : 1 }} onClick={() => selectedPeopleForGroup.length >= 2 && setGroupStep(2)}>Next ({selectedPeopleForGroup.length})</button></div>
-            <div style={{ fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>Select people</div>
+            <div className="app-header">
+              <button style={styles.btnText} onClick={() => { setSelectedPeopleForGroup([]); setSearchTerm(''); setScreen('home'); }}>Cancel</button>
+              <input 
+                style={styles.searchInput} 
+                type="text" 
+                placeholder="Search..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <button style={{ ...styles.btnText, opacity: selectedPeopleForGroup.length < 2 ? 0.4 : 1 }} onClick={() => { if (selectedPeopleForGroup.length >= 2) { setSearchTerm(''); setGroupStep(2); } }}>Next ({selectedPeopleForGroup.length})</button>
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>Select people to group</div>
             
             {/* Sorting controls */}
             <div style={{ ...styles.sortRow, marginBottom: '12px' }}>
-              <div style={styles.sortDropdown}>
+              <div style={{ ...styles.sortDropdown, marginBottom: 0 }}>
                 <button style={styles.sortTrigger} onClick={() => setSortDropdownOpen(o => !o)}>
-                  {sortBy === 'firstName' ? 'First Name' : sortBy === 'lastName' ? 'Last Name' : 'Frequency'}
+                  {sortBy === 'lastName' ? 'Last Name' : sortBy === 'firstName' ? 'First Name' : 'Frequency'}
                   <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>▼</span>
                 </button>
                 {sortDropdownOpen && (
                   <>
                     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setSortDropdownOpen(false)} />
                     <div style={styles.sortMenu}>
-                      {[{ value: 'firstName', label: 'First Name' }, { value: 'lastName', label: 'Last Name' }, { value: 'frequency', label: 'Frequency' }].map(opt => (
+                      {[{ value: 'lastName', label: 'Last Name' }, { value: 'firstName', label: 'First Name' }, { value: 'frequency', label: 'Frequency' }].map(opt => (
                         <div 
                           key={opt.value}
                           style={{ ...styles.sortOption, ...(sortBy === opt.value ? styles.sortOptionActive : {}) }}
@@ -3089,24 +3560,29 @@
               <button style={styles.reverseBtn} onClick={() => setSortReversed(r => !r)}>{sortReversed ? '↑' : '↓'}</button>
             </div>
             
-            {!people.length ? <div style={styles.emptyState}>Add people first.</div> : (
+            {!people.length ? <div style={styles.emptyState}>Add people first.</div> : (() => {
+              const filtered = getFilteredSortedPeople();
+              if (searchTerm && !filtered.length) return <div style={styles.emptyState}>No results for "{searchTerm}"</div>;
+              return (
               <div style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '4px 6px', margin: '0 -6px' }}>
                 {sortBy !== 'frequency' ? (
-                  getSortedPeople().map(p => { 
-                    const isSel = selectedPeopleForGroup.includes(p.id); 
-                    const isOrg = !p.firstName && !p.lastName && p.organisation; 
-                    const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); 
-                    return (
-                      <div key={p.id} style={{ ...styles.listItem, background: isSel ? colors.primaryGradient : colors.cardBg, color: isSel ? colors.primaryText : colors.text }} onClick={() => setSelectedPeopleForGroup(prev => isSel ? prev.filter(id => id !== p.id) : [...prev, p.id])}>
-                        <span style={{ fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span>
-                        {p.isChild && <span style={{ fontSize: '12px', opacity: 0.7 }}>(child)</span>}
-                      </div>
-                    ); 
-                  })
+                  <div className="two-column-grid">
+                    {filtered.map(p => { 
+                      const isSel = selectedPeopleForGroup.includes(p.id); 
+                      const isOrg = !p.firstName && !p.lastName && p.organisation; 
+                      const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); 
+                      return (
+                        <div key={p.id} style={{ ...styles.listItem, background: isSel ? colors.primaryGradient : colors.cardBg, color: isSel ? colors.primaryText : colors.text }} onClick={() => setSelectedPeopleForGroup(prev => isSel ? prev.filter(id => id !== p.id) : [...prev, p.id])}>
+                          <span style={{ fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span>
+                          {p.isChild && <span style={{ fontSize: '12px', opacity: 0.7 }}>(child)</span>}
+                        </div>
+                      ); 
+                    })}
+                  </div>
                 ) : (
                   (() => {
                     const groups = {};
-                    getSortedPeople().forEach(p => {
+                    filtered.forEach(p => {
                       const freq = getPersonFrequency(p);
                       if (!groups[freq]) groups[freq] = [];
                       groups[freq].push(p);
@@ -3117,29 +3593,32 @@
                       return (
                         <div key={freq}>
                           <div style={styles.frequencyHeading}>{formatFrequency(freq)}</div>
-                          {groups[freq].map(p => { 
-                            const isSel = selectedPeopleForGroup.includes(p.id); 
-                            const isOrg = !p.firstName && !p.lastName && p.organisation; 
-                            const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); 
-                            return (
-                              <div key={p.id} style={{ ...styles.listItem, background: isSel ? colors.primaryGradient : colors.cardBg, color: isSel ? colors.primaryText : colors.text }} onClick={() => setSelectedPeopleForGroup(prev => isSel ? prev.filter(id => id !== p.id) : [...prev, p.id])}>
-                                <span style={{ fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span>
-                                {p.isChild && <span style={{ fontSize: '12px', opacity: 0.7 }}>(child)</span>}
-                              </div>
-                            ); 
-                          })}
+                          <div className="two-column-grid">
+                            {groups[freq].map(p => { 
+                              const isSel = selectedPeopleForGroup.includes(p.id); 
+                              const isOrg = !p.firstName && !p.lastName && p.organisation; 
+                              const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); 
+                              return (
+                                <div key={p.id} style={{ ...styles.listItem, background: isSel ? colors.primaryGradient : colors.cardBg, color: isSel ? colors.primaryText : colors.text }} onClick={() => setSelectedPeopleForGroup(prev => isSel ? prev.filter(id => id !== p.id) : [...prev, p.id])}>
+                                  <span style={{ fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span>
+                                  {p.isChild && <span style={{ fontSize: '12px', opacity: 0.7 }}>(child)</span>}
+                                </div>
+                              ); 
+                            })}
+                          </div>
                         </div>
                       );
                     });
                   })()
                 )}
               </div>
-            )}
+              );
+            })()}
           </div>
         );
         return (
           <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-            <div className="app-header"><button style={styles.btnText} onClick={() => setGroupStep(1)}>← Back</button><button style={styles.btnText} onClick={create}>Create</button></div>
+            <div className="app-header"><button style={styles.btnText} onClick={() => setGroupStep(1)}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button><button style={styles.btnText} onClick={create}>Create</button></div>
             <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '20px' }}>
               <label style={styles.label}>Group Name</label><input style={styles.input} value={groupForm.name} onChange={e => setGroupForm({ ...groupForm, name: e.target.value })} placeholder="e.g. Smiths" />
               <label style={styles.label}>Frequency</label>
@@ -3238,40 +3717,52 @@
           
           return (
             <div className="app-container" style={styles.container}>
-              <div className="app-header"><button style={styles.btnText} onClick={() => { setViewingStats(null); setSelectedHistoryDate(null); }}>← Back</button></div>
-              <div style={{ fontSize: '22px', fontWeight: '700', marginBottom: '4px', fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</div>
-              <div style={{ color: colors.textSecondary, marginBottom: '24px', fontSize: '16px' }}>{prayed.length} times in {mName}</div>
-              
-              <div style={styles.calendar}>
-                <div style={styles.calendarHeader}><button style={styles.navButton} onClick={() => setStatsMonth(new Date(y, m - 1))}>‹</button><span style={{ fontWeight: '600', fontSize: '17px' }}>{mName}</span><button style={styles.navButton} onClick={() => setStatsMonth(new Date(y, m + 1))}>›</button></div>
-                <div style={styles.calendarGrid}>
-                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={i} style={styles.calendarDayHeader}>{d}</div>)}
-                  {Array(first).fill(null).map((_, i) => <div key={`e${i}`} style={styles.calendarDay}></div>)}
-                  {Array(days).fill(null).map((_, i) => { 
-                    const day = i + 1;
-                    const isPrayed = prayed.includes(day);
-                    const isSelected = day === selectedDay;
-                    return (
-                      <div 
-                        key={day} 
-                        style={{ 
-                          ...styles.calendarDay, 
-                          ...(isPrayed ? styles.prayedDay : {}),
-                          ...(isSelected ? { boxShadow: `inset 0 0 0 3px ${colors.primary}` } : {}),
-                          cursor: isPrayed ? 'pointer' : 'default',
-                          transition: 'all 0.15s ease'
-                        }}
-                        onClick={() => isPrayed && setSelectedHistoryDate(formatDate(new Date(y, m, day)))}
-                      >
-                        {day}
-                      </div>
-                    );
-                  })}
+              <div className="app-header" style={{ position: 'relative' }}>
+                <button style={styles.btnText} onClick={() => { setViewingStats(null); setSelectedHistoryDate(null); }}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button>
+                <div className="landscape-only" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ fontSize: '18px', fontWeight: '700', fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</div>
+                  <div style={{ color: colors.textSecondary, fontSize: '14px' }}>{prayed.length} times in {mName}</div>
                 </div>
               </div>
+              <div className="portrait-only" style={{ fontSize: '22px', fontWeight: '700', marginBottom: '4px', fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</div>
+              <div className="portrait-only" style={{ color: colors.textSecondary, marginBottom: '24px', fontSize: '16px' }}>{prayed.length} times in {mName}</div>
               
-              {/* Historical Prayer Card - below calendar */}
-              {selectedHistoryDate && (() => {
+              {/* Portrait: stacked layout */}
+              <div className="portrait-only">
+                <div className="calendar" style={{ ...styles.calendar, padding: '22px' }}>
+                  <div className="calendar-header" style={{ ...styles.calendarHeader, marginBottom: '12px' }}><button className="nav-button" style={{ ...styles.navButton, fontSize: '16px', padding: '4px 8px' }} onClick={() => setStatsMonth(new Date(y, m - 1))}>‹</button><span style={{ fontWeight: '600', fontSize: '15px' }}>{mName}</span><button className="nav-button" style={{ ...styles.navButton, fontSize: '16px', padding: '4px 8px' }} onClick={() => setStatsMonth(new Date(y, m + 1))}>›</button></div>
+                  <div className="calendar-grid" style={{ ...styles.calendarGrid, gap: '4px' }}>
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={i} className="calendar-day-header" style={{ ...styles.calendarDayHeader, fontSize: '11px', padding: '4px 2px' }}>{d}</div>)}
+                    {Array(first).fill(null).map((_, i) => <div key={`e${i}`} className="calendar-day" style={{ ...styles.calendarDay, padding: '6px 2px', fontSize: '13px', borderRadius: '6px' }}></div>)}
+                    {Array(days).fill(null).map((_, i) => { 
+                      const day = i + 1;
+                      const isPrayed = prayed.includes(day);
+                      const isSelected = day === selectedDay;
+                      return (
+                        <div 
+                          key={day} 
+                          className="calendar-day"
+                          style={{ 
+                            ...styles.calendarDay, 
+                            ...(isPrayed ? styles.prayedDay : {}),
+                            ...(isSelected ? { boxShadow: `inset 0 0 0 3px ${colors.primary}` } : {}),
+                            cursor: isPrayed ? 'pointer' : 'default',
+                            transition: 'all 0.15s ease',
+                            padding: '6px 2px',
+                            fontSize: '13px',
+                            borderRadius: '6px'
+                          }}
+                          onClick={() => isPrayed && setSelectedHistoryDate(formatDate(new Date(y, m, day)))}
+                        >
+                          {day}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                {/* Historical Prayer Card - below calendar */}
+                {selectedHistoryDate && (() => {
                 // For cards, gather all individual prayer points from that date
                 const individualPoints = [];
                 if (isCard) {
@@ -3343,69 +3834,248 @@
                 );
               })()}
               
-              {allDates.length > 0 && (
-                <div style={{ marginTop: '24px' }}>
-                  <div style={{ fontSize: '13px', fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>All Prayer Dates</div>
-                  {(() => {
-                    // Group dates by month
-                    const monthGroups = {};
-                    allDates.forEach(date => {
-                      const d = new Date(date);
-                      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
-                      if (!monthGroups[key]) {
-                        monthGroups[key] = { year: d.getFullYear(), month: d.getMonth(), dates: [] };
-                      }
-                      monthGroups[key].dates.push({ date, day: d.getDate() });
-                    });
-                    // Sort month keys descending
-                    const sortedKeys = Object.keys(monthGroups).sort((a, b) => b.localeCompare(a));
-                    return sortedKeys.map(key => {
-                      const group = monthGroups[key];
-                      const monthLabel = new Date(group.year, group.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                      // Sort dates within month ascending
-                      group.dates.sort((a, b) => a.day - b.day);
-                      return (
-                        <div key={key} style={{ marginBottom: '12px' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                            <div style={{ fontSize: '13px', fontWeight: '600', color: colors.textTertiary, minWidth: '70px', paddingTop: '6px' }}>{monthLabel}</div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', flex: 1 }}>
-                              {group.dates.map(({ date, day }) => {
-                                const isSelected = date === selectedHistoryDate;
-                                return (
-                                  <button
-                                    key={date}
-                                    onClick={() => { setStatsMonth(new Date(group.year, group.month)); setSelectedHistoryDate(date); }}
-                                    style={{
-                                      width: '32px',
-                                      height: '32px',
-                                      borderRadius: '50%',
-                                      fontSize: '13px',
-                                      fontWeight: isSelected ? '700' : '500',
-                                      background: isSelected ? colors.primaryGradient : colors.accentGradient,
-                                      border: isSelected ? `2px solid ${colors.primary}` : 'none',
-                                      boxShadow: isSelected ? `0 0 0 2px ${colors.cardBg}` : 'none',
-                                      color: '#FFF',
-                                      cursor: 'pointer',
-                                      fontFamily: 'inherit',
-                                      outline: 'none',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      padding: 0
-                                    }}
-                                  >
-                                    {day}
-                                  </button>
-                                );
-                              })}
+                {allDates.length > 0 && (
+                  <div style={{ marginTop: '24px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>All Prayer Dates</div>
+                    {(() => {
+                      // Group dates by month
+                      const monthGroups = {};
+                      allDates.forEach(date => {
+                        const d = new Date(date);
+                        const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
+                        if (!monthGroups[key]) {
+                          monthGroups[key] = { year: d.getFullYear(), month: d.getMonth(), dates: [] };
+                        }
+                        monthGroups[key].dates.push({ date, day: d.getDate() });
+                      });
+                      // Sort month keys descending
+                      const sortedKeys = Object.keys(monthGroups).sort((a, b) => b.localeCompare(a));
+                      return sortedKeys.map(key => {
+                        const group = monthGroups[key];
+                        const monthLabel = new Date(group.year, group.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                        // Sort dates within month ascending
+                        group.dates.sort((a, b) => a.day - b.day);
+                        return (
+                          <div key={key} style={{ marginBottom: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                              <div style={{ fontSize: '13px', fontWeight: '600', color: colors.textTertiary, minWidth: '70px', paddingTop: '6px' }}>{monthLabel}</div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', flex: 1 }}>
+                                {group.dates.map(({ date, day }) => {
+                                  const isSelected = date === selectedHistoryDate;
+                                  return (
+                                    <button
+                                      key={date}
+                                      onClick={() => { setStatsMonth(new Date(group.year, group.month)); setSelectedHistoryDate(date); }}
+                                      style={{
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: '50%',
+                                        fontSize: '13px',
+                                        fontWeight: isSelected ? '700' : '500',
+                                        background: isSelected ? colors.primaryGradient : colors.accentGradient,
+                                        border: isSelected ? `2px solid ${colors.primary}` : 'none',
+                                        boxShadow: isSelected ? `0 0 0 2px ${colors.cardBg}` : 'none',
+                                        color: '#FFF',
+                                        cursor: 'pointer',
+                                        fontFamily: 'inherit',
+                                        outline: 'none',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        padding: 0
+                                      }}
+                                    >
+                                      {day}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
+              </div>
+              
+              {/* Landscape: 2-column layout */}
+              <div className="landscape-only" style={{ display: 'flex', gap: '0', alignItems: 'flex-start' }}>
+                <div className="landscape-left" style={{ paddingRight: '24px', overflowY: 'visible' }}>
+                  <div className="calendar" style={{ ...styles.calendar, padding: '22px' }}>
+                    <div className="calendar-header" style={{ ...styles.calendarHeader, marginBottom: '12px' }}><button className="nav-button" style={{ ...styles.navButton, fontSize: '16px', padding: '4px 8px' }} onClick={() => setStatsMonth(new Date(y, m - 1))}>‹</button><span style={{ fontWeight: '600', fontSize: '15px' }}>{mName}</span><button className="nav-button" style={{ ...styles.navButton, fontSize: '16px', padding: '4px 8px' }} onClick={() => setStatsMonth(new Date(y, m + 1))}>›</button></div>
+                    <div className="calendar-grid" style={{ ...styles.calendarGrid, gap: '4px' }}>
+                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={i} className="calendar-day-header" style={{ ...styles.calendarDayHeader, fontSize: '11px', padding: '4px 2px' }}>{d}</div>)}
+                      {Array(first).fill(null).map((_, i) => <div key={`e${i}`} className="calendar-day" style={{ ...styles.calendarDay, padding: '6px 2px', fontSize: '13px', borderRadius: '6px' }}></div>)}
+                      {Array(days).fill(null).map((_, i) => { 
+                        const day = i + 1;
+                        const isPrayed = prayed.includes(day);
+                        const isSelected = day === selectedDay;
+                        return (
+                          <div 
+                            key={day} 
+                            className="calendar-day"
+                            style={{ 
+                              ...styles.calendarDay, 
+                              ...(isPrayed ? styles.prayedDay : {}),
+                              ...(isSelected ? { boxShadow: `inset 0 0 0 3px ${colors.primary}` } : {}),
+                              cursor: isPrayed ? 'pointer' : 'default',
+                              transition: 'all 0.15s ease',
+                              padding: '6px 2px',
+                              fontSize: '13px',
+                              borderRadius: '6px'
+                            }}
+                            onClick={() => isPrayed && setSelectedHistoryDate(formatDate(new Date(y, m, day)))}
+                          >
+                            {day}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="landscape-separator"></div>
+                
+                <div className="landscape-right" style={{ paddingLeft: '24px' }}>
+                  {/* Historical Prayer Card */}
+                  {selectedHistoryDate && (() => {
+                    // For cards, gather all individual prayer points from that date
+                    const individualPoints = [];
+                    if (isCard) {
+                      viewingStats.peopleIds.forEach(pid => {
+                        const person = people.find(p => p.id === pid);
+                        if (person) {
+                          const personEntry = getHistoryForDate(person.prayerHistory, selectedHistoryDate);
+                          if (personEntry?.personPrayerPoint) {
+                            const displayName = person.firstName || person.organisation || 'Unknown';
+                            individualPoints.push({ name: displayName, points: personEntry.personPrayerPoint });
+                          }
+                        }
+                      });
+                    }
+                    
+                    const hasCardPoints = selectedEntry?.cardPrayerPoint;
+                    const hasPersonalPoints = !isCard && selectedEntry?.personPrayerPoint;
+                    const hasIndividualPoints = individualPoints.length > 0;
+                    const hasAnyPoints = hasCardPoints || hasPersonalPoints || hasIndividualPoints;
+                    
+                    if (!hasAnyPoints) {
+                      return (
+                        <div style={{ ...styles.card, marginTop: '0', marginBottom: '24px', background: colors.secondaryGradient, textAlign: 'center', padding: '12px 14px' }}>
+                          <div style={{ fontSize: '13px', color: colors.textSecondary }}>
+                            No prayer points recorded for {new Date(selectedHistoryDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </div>
+                          <div style={{ fontSize: '11px', color: colors.textTertiary, marginTop: '4px' }}>
+                            (Prayer points are saved from new prayers going forward)
                           </div>
                         </div>
                       );
-                    });
+                    }
+                    
+                    return (
+                      <div style={{ ...styles.card, marginTop: '0', marginBottom: '24px', padding: '12px 14px', background: colors.primaryGradient + '15', border: `2px solid ${colors.primary}` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <div style={{ fontSize: '12px', fontWeight: '600', color: colors.primary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Prayer on {new Date(selectedHistoryDate).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                          </div>
+                          <button 
+                            style={{ background: 'none', border: 'none', color: colors.textTertiary, fontSize: '16px', cursor: 'pointer', padding: '2px' }}
+                            onClick={() => setSelectedHistoryDate(null)}
+                          >×</button>
+                        </div>
+                        {hasCardPoints && (
+                          <div style={{ marginBottom: (hasPersonalPoints || hasIndividualPoints) ? '10px' : '0' }}>
+                            <div style={{ fontSize: '11px', color: colors.textTertiary, marginBottom: '2px' }}>Card</div>
+                            {renderHistoricalPrayerPoints(selectedEntry.cardPrayerPoint)}
+                          </div>
+                        )}
+                        {hasPersonalPoints && (
+                          <div>
+                            <div style={{ fontSize: '11px', color: colors.textTertiary, marginBottom: '2px' }}>Personal</div>
+                            {renderHistoricalPrayerPoints(selectedEntry.personPrayerPoint)}
+                          </div>
+                        )}
+                        {hasIndividualPoints && (
+                          <div>
+                            <div style={{ fontSize: '11px', color: colors.textTertiary, marginBottom: '4px' }}>Individual Prayer Points</div>
+                            {individualPoints.map((item, idx) => (
+                              <div key={idx} style={{ marginBottom: idx < individualPoints.length - 1 ? '8px' : '0' }}>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: colors.text, marginBottom: '2px' }}>{item.name}</div>
+                                {renderHistoricalPrayerPoints(item.points)}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
                   })()}
+                  
+                  {allDates.length > 0 && (
+                    <div style={{ marginTop: selectedHistoryDate ? '0' : '0' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>All Prayer Dates</div>
+                      {(() => {
+                        // Group dates by month
+                        const monthGroups = {};
+                        allDates.forEach(date => {
+                          const d = new Date(date);
+                          const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
+                          if (!monthGroups[key]) {
+                            monthGroups[key] = { year: d.getFullYear(), month: d.getMonth(), dates: [] };
+                          }
+                          monthGroups[key].dates.push({ date, day: d.getDate() });
+                        });
+                        // Sort month keys descending
+                        const sortedKeys = Object.keys(monthGroups).sort((a, b) => b.localeCompare(a));
+                        return sortedKeys.map(key => {
+                          const group = monthGroups[key];
+                          const monthLabel = new Date(group.year, group.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                          // Sort dates within month ascending
+                          group.dates.sort((a, b) => a.day - b.day);
+                          return (
+                            <div key={key} style={{ marginBottom: '12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: colors.textTertiary, minWidth: '70px', paddingTop: '6px' }}>{monthLabel}</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', flex: 1 }}>
+                                  {group.dates.map(({ date, day }) => {
+                                    const isSelected = date === selectedHistoryDate;
+                                    return (
+                                      <button
+                                        key={date}
+                                        onClick={() => { setStatsMonth(new Date(group.year, group.month)); setSelectedHistoryDate(date); }}
+                                        style={{
+                                          width: '32px',
+                                          height: '32px',
+                                          borderRadius: '50%',
+                                          fontSize: '13px',
+                                          fontWeight: isSelected ? '700' : '500',
+                                          background: isSelected ? colors.primaryGradient : colors.accentGradient,
+                                          border: isSelected ? `2px solid ${colors.primary}` : 'none',
+                                          boxShadow: isSelected ? `0 0 0 2px ${colors.cardBg}` : 'none',
+                                          color: '#FFF',
+                                          cursor: 'pointer',
+                                          fontFamily: 'inherit',
+                                          outline: 'none',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          padding: 0
+                                        }}
+                                      >
+                                        {day}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           );
         }
@@ -3413,10 +4083,10 @@
         // Main history list view with tabs
         const renderHistorySortControls = (isPeople = true) => (
           <div className="sort-row" style={{ ...styles.sortRow, marginBottom: 0 }}>
-            <div style={styles.sortDropdown}>
+            <div style={{ ...styles.sortDropdown, marginBottom: 0 }}>
               <button style={styles.sortTrigger} onClick={() => setSortDropdownOpen(o => !o)}>
                 {isPeople 
-                  ? (sortBy === 'firstName' ? 'First Name' : sortBy === 'lastName' ? 'Last Name' : 'Frequency')
+                  ? (sortBy === 'lastName' ? 'Last Name' : sortBy === 'firstName' ? 'First Name' : 'Frequency')
                   : (cardSortBy === 'name' ? 'Name' : 'Frequency')
                 }
                 <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>▼</span>
@@ -3426,7 +4096,7 @@
                   <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setSortDropdownOpen(false)} />
                   <div style={styles.sortMenu}>
                     {(isPeople 
-                      ? [{ value: 'firstName', label: 'First Name' }, { value: 'lastName', label: 'Last Name' }, { value: 'frequency', label: 'Frequency' }]
+                      ? [{ value: 'lastName', label: 'Last Name' }, { value: 'firstName', label: 'First Name' }, { value: 'frequency', label: 'Frequency' }]
                       : [{ value: 'name', label: 'Name' }, { value: 'frequency', label: 'Frequency' }]
                     ).map(opt => (
                       <div 
@@ -3448,8 +4118,10 @@
         
         const renderHistoryPeopleList = () => {
           if (!people.length) return <div style={styles.emptyState}>No history yet.</div>;
+          const filtered = getFilteredSortedPeople();
+          if (searchTerm && !filtered.length) return <div style={styles.emptyState}>No results for "{searchTerm}"</div>;
           return (() => {
-                const sorted = getSortedPeople();
+                const sorted = filtered;
                 const listItemStyle = { ...styles.listItem, marginBottom: 0 };
                 
                 if (sortBy !== 'frequency') {
@@ -3503,8 +4175,10 @@
         
         const renderHistoryGroupsList = () => {
           if (!getSortedCards().length) return <div style={styles.emptyState}>No groups yet.</div>;
+          const filteredCards = getFilteredSortedCards();
+          if (searchTerm && !filteredCards.length) return <div style={styles.emptyState}>No results for "{searchTerm}"</div>;
           return (() => {
-                const sortedCards = getSortedCards();
+                const sortedCards = filteredCards;
                 const listItemStyle = { ...styles.listItem, marginBottom: 0 };
                 
                 if (cardSortBy !== 'frequency') {
@@ -3555,7 +4229,15 @@
         return (
           <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
             <div className="app-header">
-              <button style={styles.btnText} onClick={() => setScreen('home')}>← Back</button>
+              <button style={styles.btnText} onClick={() => { setSearchTerm(''); setScreen('home'); }}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button>
+              <input 
+                style={styles.searchInput} 
+                type="text" 
+                placeholder="Search..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div style={{ width: '50px' }}></div>
             </div>
             
             {/* Portrait: Tabs stacked above sorting */}
@@ -3564,48 +4246,58 @@
                 <button style={{ ...styles.tab, ...(historyTab === 'people' ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setHistoryTab('people')}>People</button>
                 <button style={{ ...styles.tab, ...(historyTab === 'groups' ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setHistoryTab('groups')}>Groups</button>
               </div>
-              {renderHistorySortControls(historyTab === 'people')}
+              <div style={{ marginBottom: '12px' }}>
+                {renderHistorySortControls(historyTab === 'people')}
+              </div>
             </div>
             
             {/* Landscape: Tabs left, sorting right - same row */}
             <div className="landscape-only">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', gap: '12px', width: '100%' }}>
                 <div style={{ ...styles.tabs, flex: '0 0 auto', width: '280px', marginBottom: 0 }}>
                   <button style={{ ...styles.tab, ...(historyTab === 'people' ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setHistoryTab('people')}>People</button>
                   <button style={{ ...styles.tab, ...(historyTab === 'groups' ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setHistoryTab('groups')}>Groups</button>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', flex: '0 0 auto' }}>
                   {renderHistorySortControls(historyTab === 'people')}
                 </div>
               </div>
             </div>
             
             {/* 2-column grid list */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '4px 6px', margin: '0 -6px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 4px 6px', margin: '0 -6px' }}>
               {historyTab === 'people' ? renderHistoryPeopleList() : renderHistoryGroupsList()}
             </div>
           </div>
         );
       };
 
-      // Onboarding takes highest priority
-      if (!onboardingComplete) return renderOnboarding();
-      
-      // Help screen takes priority
-      if (helpOpen) return renderHelp();
-      
-      if (editingPerson) return <>{renderEditPerson()}{renderModal()}</>;
-      if (editingCard) return <>{renderEditCard()}{renderModal()}</>;
-      if (viewingStats) return renderStats();
-      
-      switch (screen) {
-        case 'home': return renderHome();
-        case 'prayer': return renderPrayer();
-        case 'manage': return renderManage();
-        case 'stats': return renderStats();
-        case 'createGroup': return renderCreateGroup();
-        default: return renderHome();
-      }
+      const renderContent = () => {
+        // Onboarding takes highest priority
+        if (!onboardingComplete) return renderOnboarding();
+        
+        // Help screen takes priority
+        if (helpOpen) return renderHelp();
+        
+        if (editingPerson) return <>{renderEditPerson()}{renderModal()}</>;
+        if (editingCard) return <>{renderEditCard()}{renderModal()}</>;
+        if (viewingStats) return renderStats();
+        
+        switch (screen) {
+          case 'home': return renderHome();
+          case 'prayer': return renderPrayer();
+          case 'manage': return renderManage();
+          case 'stats': return renderStats();
+          case 'createGroup': return renderCreateGroup();
+          default: return renderHome();
+        }
+      };
+
+      return (
+        <div className="desktop-wrapper">
+          {renderContent()}
+        </div>
+      );
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
