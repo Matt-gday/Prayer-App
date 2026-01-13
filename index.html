@@ -30,9 +30,12 @@
     html, body, #root {
       height: 100%;
       width: 100%;
-      /* Browser background - slightly darker to contrast with app */
-      background: linear-gradient(160deg, #E0D5C4 0%, #D4C8B5 50%, #C9BCA8 100%);
+      /* Match container background to prevent visible line */
+      background: linear-gradient(160deg, #F5EEE4 0%, #E8DECE 50%, #EDE4D8 100%);
       background-attachment: fixed;
+      overflow: hidden;
+      overscroll-behavior: none;
+      position: relative;
     }
     body {
       font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -43,6 +46,9 @@
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
       padding-bottom: env(safe-area-inset-bottom);
+      margin: 0;
+      height: 100%;
+      max-height: 100%;
     }
     input, textarea, select, button {
       font-family: inherit;
@@ -712,6 +718,10 @@
       flex-direction: column;
       flex: 1;
       min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
     .home-left {
       display: flex;
@@ -1254,10 +1264,10 @@
       const [greetingLandscapeFontSize, setGreetingLandscapeFontSize] = useState(null);
 
       // Calculate font size to fit text within available width
-      const calculateGreetingFontSize = (text, containerWidth, padding = 40, minSize = 16, maxSize = 40) => {
-        if (!containerWidth || containerWidth <= 0) return maxSize;
-        const availableWidth = containerWidth - padding;
-        if (availableWidth <= 0) return minSize;
+      const calculateGreetingFontSize = (text, availableWidth, padding = 0, minSize = 16, maxSize = 40) => {
+        if (!availableWidth || availableWidth <= 0) return maxSize;
+        const width = availableWidth - padding;
+        if (width <= 0) return minSize;
         
         // Create a temporary element to measure actual text width
         const tempEl = document.createElement('span');
@@ -1279,7 +1289,7 @@
           tempEl.style.fontSize = `${mid}px`;
           const textWidth = tempEl.offsetWidth;
           
-          if (textWidth <= availableWidth) {
+          if (textWidth <= width) {
             bestSize = mid;
             low = mid + 1;
           } else {
@@ -1320,7 +1330,7 @@
 
       const baseBtn = { border: 'none', borderRadius: '14px', cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: 'inherit' };
       const styles = {
-        container: { fontFamily: "'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif", background: colors.bgGradient, color: colors.text, minHeight: '100vh', padding: '16px', paddingTop: '12px', boxSizing: 'border-box', margin: '0 auto' },
+        container: { fontFamily: "'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif", background: colors.bgGradient, color: colors.text, padding: '16px', paddingTop: '12px', boxSizing: 'border-box', margin: '0 auto' },
         header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', minHeight: '44px' },
         btnPrimary: { ...baseBtn, width: '100%', padding: '18px 24px', fontSize: '17px', background: colors.primaryGradient, color: colors.primaryText, boxShadow: '0 6px 24px rgba(184,122,74,0.35), 0 2px 8px rgba(184,122,74,0.25)' },
         btnSecondary: { ...baseBtn, padding: '14px 20px', fontSize: '15px', background: colors.secondaryGradient, color: colors.secondaryText, flex: 1, border: `1px solid ${colors.border}` },
@@ -1403,6 +1413,20 @@
       }, [cards, demoMode]);
       useEffect(() => { if (session) localStorage.setItem('prayerApp_session', JSON.stringify(session)); }, [session]);
 
+      // Prevent body/document scrolling - all pages should handle their own scrolling in containers
+      useEffect(() => {
+        // Body and html are already set to overflow: hidden in CSS
+        // This ensures they stay that way and prevents any accidental scrolling
+        document.body.style.overflow = 'hidden';
+        document.body.style.overscrollBehavior = 'none';
+        document.documentElement.style.overflow = 'hidden';
+        document.documentElement.style.overscrollBehavior = 'none';
+        
+        return () => {
+          // Don't reset on unmount - keep it hidden globally
+        };
+      }, []);
+
       // Calculate greeting font sizes to fit within container width
       useEffect(() => {
         const updateGreetingFontSizes = () => {
@@ -1411,10 +1435,12 @@
           
           // Portrait greeting
           if (greetingPortraitRef.current) {
-            const container = greetingPortraitRef.current.parentElement;
+            const container = greetingPortraitRef.current.closest('.home-greeting');
             if (container) {
               const containerWidth = container.offsetWidth || window.innerWidth;
-              const fontSize = calculateGreetingFontSize(greetingText, containerWidth, 60, 18, 42);
+              // Account for padding (20px each side) and edit button (~30px)
+              const availableWidth = containerWidth - 40 - 30;
+              const fontSize = calculateGreetingFontSize(greetingText, availableWidth, 0, 18, 42);
               setGreetingPortraitFontSize(fontSize);
             }
           }
@@ -1424,20 +1450,25 @@
             const container = greetingLandscapeRef.current.parentElement;
             if (container) {
               const containerWidth = container.offsetWidth || window.innerWidth / 2;
-              const fontSize = calculateGreetingFontSize(greetingText, containerWidth, 60, 16, 36);
+              // Account for padding and edit button
+              const availableWidth = containerWidth - 20 - 30;
+              const fontSize = calculateGreetingFontSize(greetingText, availableWidth, 0, 16, 36);
               setGreetingLandscapeFontSize(fontSize);
             }
           }
         };
         
-        // Small delay to ensure DOM is ready
-        const timeoutId = setTimeout(updateGreetingFontSizes, 100);
+        // Use requestAnimationFrame to ensure DOM is ready
+        const rafId = requestAnimationFrame(() => {
+          setTimeout(updateGreetingFontSizes, 50);
+        });
+        
         window.addEventListener('resize', updateGreetingFontSizes);
         return () => {
-          clearTimeout(timeoutId);
+          cancelAnimationFrame(rafId);
           window.removeEventListener('resize', updateGreetingFontSizes);
         };
-      }, [userName, session]);
+      }, [userName, session, screen]);
 
       // Update session rotation when cards are edited (e.g., frequency changed to daily)
       useEffect(() => {
@@ -3409,7 +3440,7 @@
         ];
         
         return (
-          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden', overscrollBehavior: 'none' }}>
             <div className="app-header">
               <button style={styles.btnText} onClick={() => setHelpOpen(false)}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button>
             </div>
@@ -3465,8 +3496,8 @@
           return activeMembers.length > 0 || c.includeUnnamedChildren;
         });
         const count = todaysCards.length;
-        return (
-          <div className="app-container" style={{ ...styles.container, position: 'relative', display: 'flex', flexDirection: 'column', height: '100vh', paddingBottom: '60px', overflow: 'hidden' }}>
+          return (
+            <div className="app-container" style={{ ...styles.container, position: 'relative', display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', paddingBottom: '60px', overflow: 'hidden', overscrollBehavior: 'none' }}>
             
             {/* Top row with info, sync, and demo buttons */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -3482,10 +3513,38 @@
               const greetingLength = greetingText.length;
               const baseFontSize = greetingLength > 24 ? 18 : greetingLength > 20 ? 20 : greetingLength > 16 ? 22 : 24;
               const fallbackFontSize = Math.round(baseFontSize * 1.7);
-              const greetingFontSize = greetingPortraitFontSize ? `${greetingPortraitFontSize}px` : `${fallbackFontSize}px`;
+              // Use calculated size or fallback
+              const greetingFontSize = greetingPortraitFontSize 
+                ? `${greetingPortraitFontSize}px` 
+                : `${fallbackFontSize}px`;
+              
+              // Callback ref to calculate font size when element mounts
+              const setGreetingPortraitRef = (el) => {
+                greetingPortraitRef.current = el;
+                if (el) {
+                  // Use requestAnimationFrame to ensure layout is complete
+                  requestAnimationFrame(() => {
+                    const container = el.closest('.home-greeting');
+                    if (container && container.offsetWidth > 0) {
+                      const containerWidth = container.offsetWidth;
+                      // Account for padding (10px each side = 20px) and edit button (~30px) and gap (6px)
+                      const availableWidth = containerWidth - 20 - 30 - 6;
+                      if (availableWidth > 0) {
+                        // Lower minimum for very long names
+                        const minSize = greetingText.length > 30 ? 14 : greetingText.length > 25 ? 16 : 18;
+                        const fontSize = calculateGreetingFontSize(greetingText, availableWidth, 0, minSize, 42);
+                        if (fontSize !== greetingPortraitFontSize) {
+                          setGreetingPortraitFontSize(fontSize);
+                        }
+                      }
+                    }
+                  });
+                }
+              };
+              
               return (
-                <div className="home-greeting portrait-only" style={{ textAlign: 'center', marginBottom: '12px', padding: '0 20px', position: 'relative', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
-                  <div ref={greetingPortraitRef} className="home-welcome" style={{ ...styles.greeting, fontSize: greetingFontSize, marginTop: 0, marginBottom: '2px', whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px', maxWidth: '100%', overflow: 'hidden' }}>
+                <div className="home-greeting portrait-only" style={{ textAlign: 'center', marginBottom: '12px', padding: '0 10px', position: 'relative', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+                  <div ref={setGreetingPortraitRef} className="home-welcome" style={{ ...styles.greeting, fontSize: greetingFontSize, marginTop: 0, marginBottom: '2px', whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px', maxWidth: '100%', overflow: 'hidden' }}>
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greetingText}</span>
                     <button className="edit-name-btn" onClick={openEditName} title="Edit name" style={{ marginLeft: '0', verticalAlign: 'middle', flexShrink: 0 }}>✎</button>
                   </div>
@@ -3501,10 +3560,33 @@
               const baseLandscapeSize = greetingLength > 24 ? 16 : greetingLength > 20 ? 17 : greetingLength > 16 ? 18 : 20;
               const fallbackLandscapeSize = Math.round(baseLandscapeSize * 1.7);
               const landscapeFontSize = greetingLandscapeFontSize ? `${greetingLandscapeFontSize}px` : `${fallbackLandscapeSize}px`;
+              
+              // Callback ref to calculate font size when element mounts
+              const setGreetingLandscapeRef = (el) => {
+                greetingLandscapeRef.current = el;
+                if (el) {
+                  // Use requestAnimationFrame to ensure layout is complete
+                  requestAnimationFrame(() => {
+                    const container = el.parentElement;
+                    if (container && container.offsetWidth > 0) {
+                      const containerWidth = container.offsetWidth;
+                      // Account for padding (5px each side = 10px) and edit button (~30px) and gap (6px)
+                      const availableWidth = containerWidth - 10 - 30 - 6;
+                      if (availableWidth > 0) {
+                        const fontSize = calculateGreetingFontSize(greetingText, availableWidth, 0, 16, 36);
+                        if (fontSize !== greetingLandscapeFontSize) {
+                          setGreetingLandscapeFontSize(fontSize);
+                        }
+                      }
+                    }
+                  });
+                }
+              };
+              
               return (
-                <div className="landscape-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '20px', padding: '0 20px' }}>
-                  <div style={{ flex: '0 0 auto', width: 'calc(50% - 1px)', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', padding: '0 10px' }}>
-                    <div ref={greetingLandscapeRef} className="home-welcome" style={{ fontSize: landscapeFontSize, whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', display: 'flex', alignItems: 'center', gap: '6px', maxWidth: '100%', overflow: 'hidden' }}>
+                <div className="landscape-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '20px', padding: '0 10px' }}>
+                  <div style={{ flex: '0 0 auto', width: 'calc(50% - 1px)', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', padding: '0 5px' }}>
+                    <div ref={setGreetingLandscapeRef} className="home-welcome" style={{ fontSize: landscapeFontSize, whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', display: 'flex', alignItems: 'center', gap: '6px', maxWidth: '100%', overflow: 'hidden' }}>
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greetingText}</span>
                       <button className="edit-name-btn" onClick={openEditName} title="Edit name" style={{ marginLeft: '0', verticalAlign: 'middle', flexShrink: 0 }}>✎</button>
                     </div>
@@ -3643,12 +3725,17 @@
                    display: 'flex',
                    flexDirection: 'column',
                    alignItems: 'center',
-                   gap: '4px'
+                   gap: '2px'
                  }} 
                  onClick={() => setScreen('manage')}
                >
-                 <span className="portrait-only" style={{ fontSize: '24px', lineHeight: '1', fontWeight: 'normal' }}>⚬⚬</span>
-                 <span>People & Groups</span>
+                 <span className="portrait-only" style={{ fontSize: '24px', lineHeight: '1', fontWeight: 'normal', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginTop: '1px' }}>
+                   <svg width="25" height="25" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ stroke: colors.primary, strokeWidth: '1.5', strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                     <circle cx="10" cy="7" r="3.5"/>
+                     <path d="M 4 16 Q 4 12 10 12 Q 16 12 16 16"/>
+                   </svg>
+                 </span>
+                 <span style={{ marginTop: '-3px' }}>People & Groups</span>
                </button>
                <button 
                  id="history-btn"
@@ -4064,7 +4151,7 @@
             </div>
             
             {/* 2-column grid list */}
-            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 4px 6px', margin: '0 -6px', minHeight: 0 }}>
+            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 24px 6px', margin: '0 -6px', minHeight: 0 }}>
               {manageTab === 'people' ? renderPeopleList() : renderGroupsList()}
             </div>
           </div>
@@ -4433,7 +4520,7 @@
           </div>
         );
         return (
-          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden', overscrollBehavior: 'none' }}>
             <div className="app-header"><button style={styles.btnText} onClick={() => setGroupStep(1)}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button><button style={styles.btnText} onClick={create}>Create</button></div>
             <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '20px' }}>
               <label style={styles.label}>Group Name</label><input style={styles.input} value={groupForm.name} onChange={e => setGroupForm({ ...groupForm, name: e.target.value })} placeholder="e.g. Smiths" />
@@ -5099,7 +5186,7 @@
             </div>
             
             {/* 2-column grid list */}
-            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 4px 6px', margin: '0 -6px', minHeight: 0 }}>
+            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 24px 6px', margin: '0 -6px', minHeight: 0 }}>
               {historyTab === 'people' ? renderHistoryPeopleList() : renderHistoryGroupsList()}
             </div>
           </div>
