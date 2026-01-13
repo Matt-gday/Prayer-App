@@ -527,22 +527,20 @@
         border-radius: 24px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
         border: 1px solid #D4C8B8;
-        overflow: hidden;
+        overflow-y: auto;
+        overflow-x: hidden;
         height: calc(100vh - 40px);
         display: flex;
         flex-direction: column;
       }
       .desktop-wrapper > * {
-        flex: 1;
-        min-height: 0;
-        height: 100% !important;
-        max-height: 100% !important;
+        flex: 1 0 auto;
+        min-height: min-content;
       }
       .app-container {
         max-width: 540px;
         background: transparent !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        min-height: 100%;
       }
     }
     @media (min-width: 1400px) {
@@ -1282,6 +1280,7 @@
         btnSecondary: { ...baseBtn, padding: '14px 20px', fontSize: '15px', background: colors.secondaryGradient, color: colors.secondaryText, flex: 1, border: `1px solid ${colors.border}` },
         btnText: { background: 'none', border: 'none', color: colors.primary, fontSize: '17px', fontWeight: '500', cursor: 'pointer', padding: '8px 0', fontFamily: 'inherit' },
         btnDanger: { ...baseBtn, width: '100%', padding: '16px 20px', fontSize: '16px', background: colors.dangerGradient, color: '#FFF', marginTop: '16px' },
+        btnArchive: { ...baseBtn, padding: '16px 20px', fontSize: '16px', background: 'linear-gradient(135deg, #8C7B6A 0%, #6B5D4F 100%)', color: '#FFF', flex: 1 },
         btnSmall: { ...baseBtn, padding: '8px 14px', fontSize: '13px', background: colors.secondaryGradient, color: colors.textSecondary, borderRadius: '10px', border: `1px solid ${colors.border}` },
         buttonRow: { display: 'flex', gap: '12px', marginBottom: '12px' },
         card: { background: colors.cardBgGradient || colors.cardBg, borderRadius: '20px', padding: '20px', marginBottom: '12px', boxShadow: colors.cardShadow, border: `1px solid ${colors.border}` },
@@ -1947,10 +1946,21 @@
         return false;
       }, [daysSinceLastPrayer, getLastPrayedDate]);
       const buildTodaysList = useCallback(() => {
-        const due = cards.filter(c => c.active && isCardDueToday(c));
+        // Filter out archived cards and cards where all members are archived
+        const due = cards.filter(c => {
+          if (!c.active || c.archived) return false;
+          if (!isCardDueToday(c)) return false;
+          // For group cards, check if at least one member is not archived
+          const activeMembers = c.peopleIds.filter(pid => {
+            const p = people.find(x => x.id === pid);
+            return p && !p.archived;
+          });
+          // Card is valid if it has active members or includeUnnamedChildren
+          return activeMembers.length > 0 || c.includeUnnamedChildren;
+        });
         const shuffle = arr => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
         return [...shuffle(due.filter(isPriorityCard)), ...shuffle(due.filter(c => !isPriorityCard(c)))].map(c => c.id);
-      }, [cards, isCardDueToday, isPriorityCard]);
+      }, [cards, people, isCardDueToday, isPriorityCard]);
 
       const startPraying = () => {
         if (!cards.filter(c => c.active).length) { alert('Add some people first!'); return; }
@@ -2026,8 +2036,8 @@
         const card = cards.find(c => c.id === cardId);
         if (!card) return false;
         
-        // Get valid people from the card (people that exist in our people array)
-        const validPeople = card.peopleIds.map(pid => people.find(x => x.id === pid)).filter(Boolean);
+        // Get valid people from the card (people that exist and are not archived)
+        const validPeople = card.peopleIds.map(pid => people.find(x => x.id === pid)).filter(p => p && !p.archived);
         
         // If the card has peopleIds but no valid people found, consider it incomplete
         // This handles edge cases where people array might be out of sync
@@ -2159,6 +2169,32 @@
         setCards(prev => prev.map(c => ({ ...c, peopleIds: c.peopleIds.filter(id => id !== pid) })).filter(c => c.peopleIds.length || c.includeUnnamedChildren));
         setPeople(prev => prev.filter(p => p.id !== pid));
       };
+      
+      const archivePerson = (pid) => {
+        setPeople(prev => prev.map(p => p.id === pid ? { ...p, archived: true, archivedDate: getToday() } : p));
+        // Also archive their solo card if they have one
+        const soloCard = cards.find(c => c.peopleIds.length === 1 && c.peopleIds[0] === pid && !c.isGroup);
+        if (soloCard) {
+          setCards(prev => prev.map(c => c.id === soloCard.id ? { ...c, archived: true, archivedDate: getToday() } : c));
+        }
+      };
+      
+      const unarchivePerson = (pid) => {
+        setPeople(prev => prev.map(p => p.id === pid ? { ...p, archived: false, archivedDate: null } : p));
+        // Also unarchive their solo card if they have one
+        const soloCard = cards.find(c => c.peopleIds.length === 1 && c.peopleIds[0] === pid && !c.isGroup);
+        if (soloCard) {
+          setCards(prev => prev.map(c => c.id === soloCard.id ? { ...c, archived: false, archivedDate: null } : c));
+        }
+      };
+      
+      const archiveCard = (cid) => {
+        setCards(prev => prev.map(c => c.id === cid ? { ...c, archived: true, archivedDate: getToday() } : c));
+      };
+      
+      const unarchiveCard = (cid) => {
+        setCards(prev => prev.map(c => c.id === cid ? { ...c, archived: false, archivedDate: null } : c));
+      };
       const createGroup = (data) => {
         if (data.checkboxOverrides) setPeople(prev => prev.map(p => data.checkboxOverrides[p.id] !== undefined ? { ...p, individualCheckbox: data.checkboxOverrides[p.id] } : p));
         setCards(prev => prev.filter(c => c.isGroup || !c.peopleIds.some(id => data.peopleIds.includes(id))));
@@ -2169,8 +2205,15 @@
       const dissolveGroup = (cid) => {
         const card = cards.find(c => c.id === cid);
         if (!card?.isGroup) return;
-        card.peopleIds.forEach(pid => { const p = people.find(x => x.id === pid); if (p) setCards(prev => [...prev, { id: generateId(), name: `${p.firstName} ${p.lastName}`.trim() || p.organisation, peopleIds: [pid], frequency: card.frequency, prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: getToday(), firstPrayerCompleted: true }]); });
-        setCards(prev => prev.filter(c => c.id !== cid));
+        // Create individual cards for non-archived members
+        card.peopleIds.forEach(pid => { 
+          const p = people.find(x => x.id === pid); 
+          if (p && !p.archived) {
+            setCards(prev => [...prev, { id: generateId(), name: `${p.firstName} ${p.lastName}`.trim() || p.organisation, peopleIds: [pid], frequency: card.frequency, prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: getToday(), firstPrayerCompleted: true }]); 
+          }
+        });
+        // Archive the group instead of deleting it (preserves prayer history)
+        setCards(prev => prev.map(c => c.id === cid ? { ...c, archived: true, archivedDate: getToday(), dissolved: true } : c));
       };
       
       const removeFromGroup = (cardId, personId) => {
@@ -2317,7 +2360,8 @@
       const renderPrayerCard = (cardId, isFullScreen = false) => {
         const card = cards.find(c => c.id === cardId);
         if (!card) return null;
-        const cardPeople = card.peopleIds.map(id => people.find(p => p.id === id)).filter(Boolean);
+        // Filter out archived people from the card
+        const cardPeople = card.peopleIds.map(id => people.find(p => p.id === id)).filter(p => p && !p.archived);
         const adults = cardPeople.filter(p => !p.isChild), children = cardPeople.filter(p => p.isChild);
         const isSingle = cardPeople.length === 1 && !card.isGroup;
         const freq = formatFrequency(card.frequency);
@@ -3328,7 +3372,16 @@
 
       const renderHome = () => {
         const showContinue = session && !isNewDay();
-        const todaysCards = cards.filter(c => c.active && isCardDueToday(c));
+        const todaysCards = cards.filter(c => {
+          if (!c.active || c.archived) return false;
+          if (!isCardDueToday(c)) return false;
+          // For group cards, check if at least one member is not archived
+          const activeMembers = c.peopleIds.filter(pid => {
+            const p = people.find(x => x.id === pid);
+            return p && !p.archived;
+          });
+          return activeMembers.length > 0 || c.includeUnnamedChildren;
+        });
         const count = todaysCards.length;
         return (
           <div className="app-container" style={{ ...styles.container, position: 'relative', display: 'flex', flexDirection: 'column', height: '100vh', paddingBottom: '60px', overflow: 'hidden' }}>
@@ -3733,11 +3786,17 @@
                       const isGrouped = c?.isGroup; 
                       const isOrg = !p.firstName && !p.lastName && p.organisation; 
                       const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); 
+                      const isArchived = p.archived;
                       return (
-                        <div key={p.id} style={listItemStyle} onClick={() => setEditingPerson(p)}>
+                        <div key={p.id} style={{ ...listItemStyle, opacity: isArchived ? 0.5 : 1 }} onClick={() => setEditingPerson(p)}>
                           <div style={{ flex: 1 }}>
-                            <div style={{ ...styles.listItemName, fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}{p.organisation && !isOrg && <span style={{ fontSize: '12px', color: colors.textTertiary, fontStyle: 'italic', fontWeight: 'normal' }}> · {p.organisation}</span>}{p.isChild && <span style={{ color: colors.textTertiary, fontSize: '12px' }}> (child)</span>}</div>
-                            {isGrouped && <div style={{ fontSize: '12px', color: colors.primary, marginTop: '2px' }}>↳ {getCardDisplayName(c)}</div>}
+                            <div style={{ ...styles.listItemName, fontStyle: isOrg ? 'italic' : 'normal' }}>
+                              {displayName}
+                              {p.organisation && !isOrg && <span style={{ fontSize: '12px', color: colors.textTertiary, fontStyle: 'italic', fontWeight: 'normal' }}> · {p.organisation}</span>}
+                              {p.isChild && <span style={{ color: colors.textTertiary, fontSize: '12px' }}> (child)</span>}
+                              {isArchived && <span style={{ color: colors.primary, fontSize: '11px', marginLeft: '6px' }}>archived</span>}
+                            </div>
+                            {isGrouped && !c?.archived && <div style={{ fontSize: '12px', color: colors.primary, marginTop: '2px' }}>↳ {getCardDisplayName(c)}</div>}
                           </div>
                           <div style={{ fontSize: '12px', color: colors.textTertiary, textAlign: 'right', whiteSpace: 'nowrap' }}>{formatFrequency(c?.frequency)} · {getPrayerCountThisMonth(p.id)}×</div>
                         </div>
@@ -3765,11 +3824,17 @@
                         const isGrouped = c?.isGroup;
                         const isOrg = !p.firstName && !p.lastName && p.organisation;
                         const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim();
+                        const isArchived = p.archived;
                         return (
-                          <div key={p.id} style={listItemStyle} onClick={() => setEditingPerson(p)}>
+                          <div key={p.id} style={{ ...listItemStyle, opacity: isArchived ? 0.5 : 1 }} onClick={() => setEditingPerson(p)}>
                             <div style={{ flex: 1 }}>
-                              <div style={{ ...styles.listItemName, fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}{p.organisation && !isOrg && <span style={{ fontSize: '12px', color: colors.textTertiary, fontStyle: 'italic', fontWeight: 'normal' }}> · {p.organisation}</span>}{p.isChild && <span style={{ color: colors.textTertiary, fontSize: '12px' }}> (child)</span>}</div>
-                              {isGrouped && <div style={{ fontSize: '12px', color: colors.primary, marginTop: '2px' }}>↳ {getCardDisplayName(c)}</div>}
+                              <div style={{ ...styles.listItemName, fontStyle: isOrg ? 'italic' : 'normal' }}>
+                                {displayName}
+                                {p.organisation && !isOrg && <span style={{ fontSize: '12px', color: colors.textTertiary, fontStyle: 'italic', fontWeight: 'normal' }}> · {p.organisation}</span>}
+                                {p.isChild && <span style={{ color: colors.textTertiary, fontSize: '12px' }}> (child)</span>}
+                                {isArchived && <span style={{ color: colors.primary, fontSize: '11px', marginLeft: '6px' }}>archived</span>}
+                              </div>
+                              {isGrouped && !c?.archived && <div style={{ fontSize: '12px', color: colors.primary, marginTop: '2px' }}>↳ {getCardDisplayName(c)}</div>}
                             </div>
                             <div style={{ fontSize: '12px', color: colors.textTertiary, textAlign: 'right', whiteSpace: 'nowrap' }}>{getPrayerCountThisMonth(p.id)}×</div>
                           </div>
@@ -3795,9 +3860,13 @@
                   <div className="two-column-grid">
                     {sortedCards.map(c => { 
                       const count = c.peopleIds.length; 
+                      const isArchived = c.archived;
                       return (
-                        <div key={c.id} style={listItemStyle} onClick={() => setEditingCard(c)}>
-                          <div style={styles.listItemName}>{getCardDisplayName(c)}</div>
+                        <div key={c.id} style={{ ...listItemStyle, opacity: isArchived ? 0.5 : 1 }} onClick={() => setEditingCard(c)}>
+                          <div style={styles.listItemName}>
+                            {getCardDisplayName(c)}
+                            {isArchived && <span style={{ color: colors.primary, fontSize: '11px', marginLeft: '6px' }}>{c.dissolved ? 'disbanded' : 'archived'}</span>}
+                          </div>
                           <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '2px' }}>{count} {count === 1 ? 'person' : 'people'}</div>
                           <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '4px' }}>{formatFrequency(c.frequency)}</div>
                         </div>
@@ -3820,9 +3889,13 @@
                     <div className="two-column-grid">
                       {groups[freq].map(c => {
                         const count = c.peopleIds.length;
+                        const isArchived = c.archived;
                         return (
-                          <div key={c.id} style={listItemStyle} onClick={() => setEditingCard(c)}>
-                            <div style={styles.listItemName}>{getCardDisplayName(c)}</div>
+                          <div key={c.id} style={{ ...listItemStyle, opacity: isArchived ? 0.5 : 1 }} onClick={() => setEditingCard(c)}>
+                            <div style={styles.listItemName}>
+                              {getCardDisplayName(c)}
+                              {isArchived && <span style={{ color: colors.primary, fontSize: '11px', marginLeft: '6px' }}>{c.dissolved ? 'disbanded' : 'archived'}</span>}
+                            </div>
                             <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '2px' }}>{count} {count === 1 ? 'person' : 'people'}</div>
                           </div>
                         );
@@ -3978,7 +4051,50 @@
             </div>
             <label style={styles.label}>Type</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(!personForm.isChild ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, isChild: false })}>Adult</div><div style={{ ...styles.toggleOption, ...(personForm.isChild ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, isChild: true })}>Child</div></div>
             <label style={styles.label}>Individual checkbox</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(personForm.individualCheckbox ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, individualCheckbox: true })}>Yes</div><div style={{ ...styles.toggleOption, ...(!personForm.individualCheckbox ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, individualCheckbox: false })}>No</div></div>
-            {!isNew && <><button style={{ ...styles.btnSecondary, width: '100%', marginTop: '8px' }} onClick={() => { setViewingStats(editingPerson); setEditingPerson(null); }}>View History</button><button style={styles.btnDanger} onClick={del}>Delete</button></>}
+            {!isNew && (
+              <>
+                <button style={{ ...styles.btnSecondary, width: '100%', marginTop: '8px' }} onClick={() => { setViewingStats(editingPerson); setEditingPerson(null); }}>View History</button>
+                {editingPerson.archived && (
+                  <div style={{ 
+                    background: 'rgba(184, 122, 74, 0.1)', 
+                    border: `1px solid ${colors.primary}`,
+                    borderRadius: '8px', 
+                    padding: '12px', 
+                    marginTop: '16px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '13px', color: colors.primary, fontWeight: '600' }}>This person is archived</div>
+                    <div style={{ fontSize: '12px', color: colors.textSecondary, marginTop: '4px' }}>
+                      They won't appear in prayer rotation or active groups
+                    </div>
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                  {editingPerson.archived ? (
+                    <button 
+                      style={{ ...styles.btnSecondary, flex: 1 }} 
+                      onClick={() => { unarchivePerson(editingPerson.id); setEditingPerson(null); }}
+                    >
+                      Unarchive
+                    </button>
+                  ) : (
+                    <button 
+                      style={styles.btnArchive} 
+                      onClick={() => setModal({
+                        title: 'Archive person?',
+                        message: `${personForm.firstName || personForm.organisation} will no longer appear in your prayer rotation but their history will be preserved.`,
+                        confirmText: 'Archive',
+                        danger: false,
+                        onConfirm: () => { archivePerson(editingPerson.id); setEditingPerson(null); }
+                      })}
+                    >
+                      Archive
+                    </button>
+                  )}
+                  <button style={{ ...styles.btnDanger, flex: 1, marginTop: 0 }} onClick={del}>Delete</button>
+                </div>
+              </>
+            )}
           </div>
         );
       };
@@ -4011,32 +4127,114 @@
               )}
             </div>
             <label style={styles.label}>Prayer Points</label><textarea style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }} value={cardForm.prayerPoint} onChange={e => setCardForm({ ...cardForm, prayerPoint: e.target.value })} placeholder="One per line" />
-            {editingCard?.isGroup && <><label style={styles.label}>Unnamed children</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(cardForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCardForm({ ...cardForm, includeUnnamedChildren: true })}>Yes</div><div style={{ ...styles.toggleOption, ...(!cardForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCardForm({ ...cardForm, includeUnnamedChildren: false })}>No</div></div><label style={styles.label}>People in group</label>{cp.map(p => {
-              const isOrg = !p.firstName && !p.lastName && p.organisation;
-              const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim();
-              return (
-                <div key={p.id} style={{ ...styles.listItem, cursor: 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <span style={{ fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span>
-                    <span style={{ fontSize: '12px', color: colors.textTertiary, marginLeft: '8px' }}>{p.isChild ? 'Child' : 'Adult'}</span>
-                  </div>
-                  <button 
-                    style={{ background: 'none', border: 'none', color: colors.textTertiary, fontSize: '18px', cursor: 'pointer', padding: '4px 8px' }}
-                    onClick={() => setModal({
-                      title: 'Remove from group?',
-                      message: `${displayName} will be removed from this group and given their own individual prayer card. Their prayer history will be preserved.`,
-                      confirmText: 'Remove',
-                      onConfirm: () => removeFromGroup(editingCard.id, p.id)
-                    })}
-                  >×</button>
+            {editingCard?.isGroup && (
+              <>
+                <label style={styles.label}>Unnamed children</label>
+                <div style={styles.toggle}>
+                  <div style={{ ...styles.toggleOption, ...(cardForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCardForm({ ...cardForm, includeUnnamedChildren: true })}>Yes</div>
+                  <div style={{ ...styles.toggleOption, ...(!cardForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCardForm({ ...cardForm, includeUnnamedChildren: false })}>No</div>
                 </div>
-              );
-            })}<button style={{ ...styles.btnSecondary, width: '100%', marginTop: '16px' }} onClick={() => setModal({
-                  title: 'Split group?',
-                  message: 'This will remove the group and create individual prayer cards for each person. Prayer history will be preserved.',
-                  confirmText: 'Split',
-                  onConfirm: () => { dissolveGroup(editingCard.id); setEditingCard(null); }
-                })}>Split into individuals</button></>}
+                <label style={styles.label}>People in group</label>
+                {cp.map(p => {
+                  const isOrg = !p.firstName && !p.lastName && p.organisation;
+                  const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim();
+                  return (
+                    <div key={p.id} style={{ ...styles.listItem, cursor: 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: p.archived ? 0.5 : 1 }}>
+                      <div>
+                        <span style={{ fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span>
+                        <span style={{ fontSize: '12px', color: colors.textTertiary, marginLeft: '8px' }}>{p.isChild ? 'Child' : 'Adult'}</span>
+                        {p.archived && <span style={{ fontSize: '11px', color: colors.primary, marginLeft: '8px' }}>(archived)</span>}
+                      </div>
+                      {!editingCard.archived && (
+                        <button 
+                          style={{ background: 'none', border: 'none', color: colors.textTertiary, fontSize: '18px', cursor: 'pointer', padding: '4px 8px' }}
+                          onClick={() => setModal({
+                            title: 'Remove from group?',
+                            message: `${displayName} will be removed from this group and given their own individual prayer card. Their prayer history will be preserved.`,
+                            confirmText: 'Remove',
+                            onConfirm: () => removeFromGroup(editingCard.id, p.id)
+                          })}
+                        >×</button>
+                      )}
+                    </div>
+                  );
+                })}
+                {editingCard.archived ? (
+                  <>
+                    <div style={{ 
+                      background: 'rgba(184, 122, 74, 0.1)', 
+                      border: `1px solid ${colors.primary}`,
+                      borderRadius: '8px', 
+                      padding: '12px', 
+                      marginTop: '16px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: '13px', color: colors.primary, fontWeight: '600' }}>
+                        {editingCard.dissolved ? 'This group has been disbanded' : 'This group is archived'}
+                      </div>
+                      <div style={{ fontSize: '12px', color: colors.textSecondary, marginTop: '4px' }}>
+                        Prayer history has been preserved
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                      <button 
+                        style={{ ...styles.btnSecondary, flex: 1 }} 
+                        onClick={() => { unarchiveCard(editingCard.id); setEditingCard(null); }}
+                      >
+                        {editingCard.dissolved ? 'Reconstitute' : 'Unarchive'}
+                      </button>
+                      <button 
+                        style={{ ...styles.btnDanger, flex: 1, marginTop: 0 }} 
+                        onClick={() => setModal({
+                          title: 'Delete group permanently?',
+                          message: 'This will permanently delete this group and its prayer history. This cannot be undone.',
+                          confirmText: 'Delete',
+                          danger: true,
+                          onConfirm: () => { setCards(prev => prev.filter(c => c.id !== editingCard.id)); setEditingCard(null); }
+                        })}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button style={{ ...styles.btnSecondary, width: '100%', marginTop: '16px' }} onClick={() => setModal({
+                      title: 'Split group?',
+                      message: 'This will archive the group and create individual prayer cards for each non-archived person. Prayer history will be preserved.',
+                      confirmText: 'Split',
+                      onConfirm: () => { dissolveGroup(editingCard.id); setEditingCard(null); }
+                    })}>Split into individuals</button>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                      <button 
+                        style={styles.btnArchive} 
+                        onClick={() => setModal({
+                          title: 'Archive group?',
+                          message: `This group will no longer appear in your prayer rotation but its history will be preserved.`,
+                          confirmText: 'Archive',
+                          danger: false,
+                          onConfirm: () => { archiveCard(editingCard.id); setEditingCard(null); }
+                        })}
+                      >
+                        Archive
+                      </button>
+                      <button 
+                        style={{ ...styles.btnDanger, flex: 1, marginTop: 0 }} 
+                        onClick={() => setModal({
+                          title: 'Delete group?',
+                          message: 'This will permanently delete this group and its prayer history. This cannot be undone.',
+                          confirmText: 'Delete',
+                          danger: true,
+                          onConfirm: () => { setCards(prev => prev.filter(c => c.id !== editingCard.id)); setEditingCard(null); }
+                        })}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
             {!editingCard?.isGroup && <button style={styles.btnDanger} onClick={() => setModal({
               title: 'Delete person?',
               message: 'This will remove this person and their prayer history permanently.',
@@ -4095,8 +4293,10 @@
             </div>
             
             {!people.length ? <div style={styles.emptyState}>Add people first.</div> : (() => {
-              const filtered = getFilteredSortedPeople();
+              // Filter out archived people from group selection
+              const filtered = getFilteredSortedPeople().filter(p => !p.archived);
               if (searchTerm && !filtered.length) return <div style={styles.emptyState}>No results for "{searchTerm}"</div>;
+              if (!filtered.length) return <div style={styles.emptyState}>No active people available.<br/>Unarchive people to add them to groups.</div>;
               return (
               <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 6px', margin: '0 -6px', minHeight: 0 }}>
                 {sortBy !== 'frequency' ? (
@@ -4664,10 +4864,15 @@
                       {sorted.map(p => { 
                         const c = cards.find(x => x.peopleIds.includes(p.id)); 
                         const isOrg = !p.firstName && !p.lastName && p.organisation; 
-                        const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); 
+                        const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim();
+                        const isArchived = p.archived;
                         return (
-                          <div key={p.id} style={listItemStyle} onClick={() => { setViewingStats(p); setStatsMonth(new Date()); setSelectedHistoryDate(null); }}>
-                            <div style={{ ...styles.listItemName, fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}{p.organisation && !isOrg && <span style={{ fontSize: '12px', color: colors.textTertiary, fontStyle: 'italic', fontWeight: 'normal' }}> · {p.organisation}</span>}</div>
+                          <div key={p.id} style={{ ...listItemStyle, opacity: isArchived ? 0.5 : 1 }} onClick={() => { setViewingStats(p); setStatsMonth(new Date()); setSelectedHistoryDate(null); }}>
+                            <div style={{ ...styles.listItemName, fontStyle: isOrg ? 'italic' : 'normal' }}>
+                              {displayName}
+                              {p.organisation && !isOrg && <span style={{ fontSize: '12px', color: colors.textTertiary, fontStyle: 'italic', fontWeight: 'normal' }}> · {p.organisation}</span>}
+                              {isArchived && <span style={{ color: colors.primary, fontSize: '11px', marginLeft: '6px' }}>archived</span>}
+                            </div>
                             <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '4px' }}>{formatFrequency(c?.frequency)} · {getPrayerCountThisMonth(p.id)}×</div>
                           </div>
                         ); 
@@ -4693,9 +4898,14 @@
                           const c = cards.find(x => x.peopleIds.includes(p.id));
                           const isOrg = !p.firstName && !p.lastName && p.organisation;
                           const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim();
+                          const isArchived = p.archived;
                           return (
-                            <div key={p.id} style={listItemStyle} onClick={() => { setViewingStats(p); setStatsMonth(new Date()); setSelectedHistoryDate(null); }}>
-                              <div style={{ ...styles.listItemName, fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}{p.organisation && !isOrg && <span style={{ fontSize: '12px', color: colors.textTertiary, fontStyle: 'italic', fontWeight: 'normal' }}> · {p.organisation}</span>}</div>
+                            <div key={p.id} style={{ ...listItemStyle, opacity: isArchived ? 0.5 : 1 }} onClick={() => { setViewingStats(p); setStatsMonth(new Date()); setSelectedHistoryDate(null); }}>
+                              <div style={{ ...styles.listItemName, fontStyle: isOrg ? 'italic' : 'normal' }}>
+                                {displayName}
+                                {p.organisation && !isOrg && <span style={{ fontSize: '12px', color: colors.textTertiary, fontStyle: 'italic', fontWeight: 'normal' }}> · {p.organisation}</span>}
+                                {isArchived && <span style={{ color: colors.primary, fontSize: '11px', marginLeft: '6px' }}>archived</span>}
+                              </div>
                               <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '4px' }}>{getPrayerCountThisMonth(p.id)}×</div>
                             </div>
                           );
@@ -4719,10 +4929,14 @@
                   return (
                     <div className="two-column-grid">
                       {sortedCards.map(c => { 
-                        const count = c.peopleIds.length; 
+                        const count = c.peopleIds.length;
+                        const isArchived = c.archived;
                         return (
-                          <div key={c.id} style={listItemStyle} onClick={() => { setViewingStats(c); setStatsMonth(new Date()); setSelectedHistoryDate(null); }}>
-                            <div style={styles.listItemName}>{getCardDisplayName(c)}</div>
+                          <div key={c.id} style={{ ...listItemStyle, opacity: isArchived ? 0.5 : 1 }} onClick={() => { setViewingStats(c); setStatsMonth(new Date()); setSelectedHistoryDate(null); }}>
+                            <div style={styles.listItemName}>
+                              {getCardDisplayName(c)}
+                              {isArchived && <span style={{ color: colors.primary, fontSize: '11px', marginLeft: '6px' }}>{c.dissolved ? 'disbanded' : 'archived'}</span>}
+                            </div>
                             <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '2px' }}>{count} {count === 1 ? 'person' : 'people'}</div>
                             <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '4px' }}>{formatFrequency(c.frequency)} · {getCardPrayerCountThisMonth(c)}×</div>
                           </div>
@@ -4745,9 +4959,13 @@
                       <div className="two-column-grid">
                         {groups[freq].map(c => {
                           const count = c.peopleIds.length;
+                          const isArchived = c.archived;
                           return (
-                            <div key={c.id} style={listItemStyle} onClick={() => { setViewingStats(c); setStatsMonth(new Date()); setSelectedHistoryDate(null); }}>
-                              <div style={styles.listItemName}>{getCardDisplayName(c)}</div>
+                            <div key={c.id} style={{ ...listItemStyle, opacity: isArchived ? 0.5 : 1 }} onClick={() => { setViewingStats(c); setStatsMonth(new Date()); setSelectedHistoryDate(null); }}>
+                              <div style={styles.listItemName}>
+                                {getCardDisplayName(c)}
+                                {isArchived && <span style={{ color: colors.primary, fontSize: '11px', marginLeft: '6px' }}>{c.dissolved ? 'disbanded' : 'archived'}</span>}
+                              </div>
                               <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '2px' }}>{count} {count === 1 ? 'person' : 'people'}</div>
                               <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '4px' }}>{getCardPrayerCountThisMonth(c)}×</div>
                             </div>
