@@ -1248,6 +1248,48 @@
       const cardContentScrollRef = React.useRef(null);
       const cardContentScrollRefPortrait = React.useRef(null);
       const cardContentScrollRefLandscape = React.useRef(null);
+      const greetingPortraitRef = React.useRef(null);
+      const greetingLandscapeRef = React.useRef(null);
+      const [greetingPortraitFontSize, setGreetingPortraitFontSize] = useState(null);
+      const [greetingLandscapeFontSize, setGreetingLandscapeFontSize] = useState(null);
+
+      // Calculate font size to fit text within available width
+      const calculateGreetingFontSize = (text, containerWidth, padding = 40, minSize = 16, maxSize = 40) => {
+        if (!containerWidth || containerWidth <= 0) return maxSize;
+        const availableWidth = containerWidth - padding;
+        if (availableWidth <= 0) return minSize;
+        
+        // Create a temporary element to measure actual text width
+        const tempEl = document.createElement('span');
+        tempEl.style.position = 'absolute';
+        tempEl.style.visibility = 'hidden';
+        tempEl.style.whiteSpace = 'nowrap';
+        tempEl.style.fontFamily = '"Oranienbaum", serif';
+        tempEl.style.fontWeight = '400';
+        tempEl.textContent = text;
+        document.body.appendChild(tempEl);
+        
+        // Binary search for the right font size
+        let low = minSize;
+        let high = maxSize;
+        let bestSize = maxSize;
+        
+        while (low <= high) {
+          const mid = Math.floor((low + high) / 2);
+          tempEl.style.fontSize = `${mid}px`;
+          const textWidth = tempEl.offsetWidth;
+          
+          if (textWidth <= availableWidth) {
+            bestSize = mid;
+            low = mid + 1;
+          } else {
+            high = mid - 1;
+          }
+        }
+        
+        document.body.removeChild(tempEl);
+        return Math.max(minSize, Math.min(maxSize, bestSize));
+      };
 
       // "Morning Prayer" - warm parchment, golden hour glow
       const colors = {
@@ -1360,6 +1402,42 @@
         }
       }, [cards, demoMode]);
       useEffect(() => { if (session) localStorage.setItem('prayerApp_session', JSON.stringify(session)); }, [session]);
+
+      // Calculate greeting font sizes to fit within container width
+      useEffect(() => {
+        const updateGreetingFontSizes = () => {
+          const showContinue = session && !isNewDay();
+          const greetingText = showContinue ? `Welcome back, ${userName || 'Friend'}` : getGreeting(userName || 'Friend');
+          
+          // Portrait greeting
+          if (greetingPortraitRef.current) {
+            const container = greetingPortraitRef.current.parentElement;
+            if (container) {
+              const containerWidth = container.offsetWidth || window.innerWidth;
+              const fontSize = calculateGreetingFontSize(greetingText, containerWidth, 60, 18, 42);
+              setGreetingPortraitFontSize(fontSize);
+            }
+          }
+          
+          // Landscape greeting
+          if (greetingLandscapeRef.current) {
+            const container = greetingLandscapeRef.current.parentElement;
+            if (container) {
+              const containerWidth = container.offsetWidth || window.innerWidth / 2;
+              const fontSize = calculateGreetingFontSize(greetingText, containerWidth, 60, 16, 36);
+              setGreetingLandscapeFontSize(fontSize);
+            }
+          }
+        };
+        
+        // Small delay to ensure DOM is ready
+        const timeoutId = setTimeout(updateGreetingFontSizes, 100);
+        window.addEventListener('resize', updateGreetingFontSizes);
+        return () => {
+          clearTimeout(timeoutId);
+          window.removeEventListener('resize', updateGreetingFontSizes);
+        };
+      }, [userName, session]);
 
       // Update session rotation when cards are edited (e.g., frequency changed to daily)
       useEffect(() => {
@@ -3400,17 +3478,16 @@
             {/* Greeting - portrait only */}
             {(() => {
               const greetingText = showContinue ? `Welcome back, ${userName || 'Friend'}` : getGreeting(userName || 'Friend');
-              // Adjust font size based on text length to prevent line breaks, then increase by 70%
+              // Use calculated font size or fallback to dynamic calculation
               const greetingLength = greetingText.length;
               const baseFontSize = greetingLength > 24 ? 18 : greetingLength > 20 ? 20 : greetingLength > 16 ? 22 : 24;
-              const greetingFontSize = `${Math.round(baseFontSize * 1.7)}px`;
-              const baseLandscapeSize = greetingLength > 24 ? 16 : greetingLength > 20 ? 17 : greetingLength > 16 ? 18 : 20;
-              const landscapeFontSize = `${Math.round(baseLandscapeSize * 1.7)}px`;
+              const fallbackFontSize = Math.round(baseFontSize * 1.7);
+              const greetingFontSize = greetingPortraitFontSize ? `${greetingPortraitFontSize}px` : `${fallbackFontSize}px`;
               return (
-                <div className="home-greeting portrait-only" style={{ textAlign: 'center', marginBottom: '12px', padding: '0 20px', position: 'relative' }}>
-                  <div className="home-welcome" style={{ ...styles.greeting, fontSize: greetingFontSize, marginTop: 0, marginBottom: '2px', whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    {greetingText}
-                    <button className="edit-name-btn" onClick={openEditName} title="Edit name" style={{ marginLeft: '0', verticalAlign: 'middle' }}>✎</button>
+                <div className="home-greeting portrait-only" style={{ textAlign: 'center', marginBottom: '12px', padding: '0 20px', position: 'relative', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+                  <div ref={greetingPortraitRef} className="home-welcome" style={{ ...styles.greeting, fontSize: greetingFontSize, marginTop: 0, marginBottom: '2px', whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px', maxWidth: '100%', overflow: 'hidden' }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greetingText}</span>
+                    <button className="edit-name-btn" onClick={openEditName} title="Edit name" style={{ marginLeft: '0', verticalAlign: 'middle', flexShrink: 0 }}>✎</button>
                   </div>
                   <div className="home-subtext" style={{ ...styles.subGreeting, fontSize: '16px', marginBottom: '0' }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
                 </div>
@@ -3422,13 +3499,14 @@
               const greetingText = showContinue ? `Welcome back, ${userName || 'Friend'}` : getGreeting(userName || 'Friend');
               const greetingLength = greetingText.length;
               const baseLandscapeSize = greetingLength > 24 ? 16 : greetingLength > 20 ? 17 : greetingLength > 16 ? 18 : 20;
-              const landscapeFontSize = `${Math.round(baseLandscapeSize * 1.7)}px`;
+              const fallbackLandscapeSize = Math.round(baseLandscapeSize * 1.7);
+              const landscapeFontSize = greetingLandscapeFontSize ? `${greetingLandscapeFontSize}px` : `${fallbackLandscapeSize}px`;
               return (
                 <div className="landscape-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '20px', padding: '0 20px' }}>
-                  <div style={{ flex: '0 0 auto', width: 'calc(50% - 1px)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div className="home-welcome" style={{ fontSize: landscapeFontSize, whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {greetingText}
-                      <button className="edit-name-btn" onClick={openEditName} title="Edit name" style={{ marginLeft: '0', verticalAlign: 'middle' }}>✎</button>
+                  <div style={{ flex: '0 0 auto', width: 'calc(50% - 1px)', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', padding: '0 10px' }}>
+                    <div ref={greetingLandscapeRef} className="home-welcome" style={{ fontSize: landscapeFontSize, whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', display: 'flex', alignItems: 'center', gap: '6px', maxWidth: '100%', overflow: 'hidden' }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greetingText}</span>
+                      <button className="edit-name-btn" onClick={openEditName} title="Edit name" style={{ marginLeft: '0', verticalAlign: 'middle', flexShrink: 0 }}>✎</button>
                     </div>
                   </div>
                   <div style={{ flex: '1', display: 'flex', justifyContent: 'center', alignItems: 'center', paddingLeft: '24px' }}>
