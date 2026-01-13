@@ -178,6 +178,126 @@
       font-style: italic;
     }
     
+    /* Tutorial overlay */
+    .tutorial-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 9998;
+      pointer-events: auto;
+    }
+    .tutorial-highlight {
+      position: absolute;
+      z-index: 9999;
+      box-shadow: 0 0 0 4px rgba(184,122,74,0.8), 0 0 0 9999px rgba(0,0,0,0.7);
+      border-radius: 12px;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+    .tutorial-tooltip {
+      position: absolute;
+      z-index: 10000;
+      background: linear-gradient(145deg, #FFFFFF 0%, #F5F0E8 100%);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 320px;
+      box-shadow: 0 8px 32px rgba(90,70,50,0.25);
+      border: 1px solid #D4C8B8;
+    }
+    .tutorial-tooltip-arrow {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-style: solid;
+    }
+    .tutorial-tooltip-arrow.top {
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 10px 10px 0 10px;
+      border-color: #F5F0E8 transparent transparent transparent;
+    }
+    .tutorial-tooltip-arrow.bottom {
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 0 10px 10px 10px;
+      border-color: transparent transparent #FFFFFF transparent;
+    }
+    .tutorial-tooltip-arrow.left {
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 10px 0 10px 10px;
+      border-color: transparent transparent transparent #F5F0E8;
+    }
+    .tutorial-tooltip-arrow.right {
+      left: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 10px 10px 10px 0;
+      border-color: transparent #FFFFFF transparent transparent;
+    }
+    .tutorial-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #3D352C;
+      margin-bottom: 10px;
+    }
+    .tutorial-text {
+      font-size: 15px;
+      color: #6B5D4F;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .tutorial-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .tutorial-btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    .tutorial-btn-primary {
+      background: linear-gradient(145deg, #B87A4A 0%, #9A6840 100%);
+      color: white;
+    }
+    .tutorial-btn-secondary {
+      background: transparent;
+      color: #8C7B6A;
+      border: 1px solid #D4C8B8;
+    }
+    .tutorial-progress {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    .tutorial-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #D4C8B8;
+      transition: all 0.2s ease;
+    }
+    .tutorial-dot.active {
+      background: #B87A4A;
+      transform: scale(1.2);
+    }
+    .tutorial-dot.completed {
+      background: #6EC49F;
+    }
+    
     /* Edit name button */
     .edit-name-btn {
       background: none;
@@ -408,13 +528,21 @@
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
         border: 1px solid #D4C8B8;
         overflow: hidden;
-        min-height: calc(100vh - 40px);
+        height: calc(100vh - 40px);
         display: flex;
         flex-direction: column;
+      }
+      .desktop-wrapper > * {
+        flex: 1;
+        min-height: 0;
+        height: 100% !important;
+        max-height: 100% !important;
       }
       .app-container {
         max-width: 540px;
         background: transparent !important;
+        height: 100% !important;
+        max-height: 100% !important;
       }
     }
     @media (min-width: 1400px) {
@@ -438,6 +566,26 @@
     @media (min-width: 1400px) {
       .bottom-nav {
         max-width: 600px;
+      }
+    }
+    
+    /* Desktop scrollable areas - add padding for rounded corners */
+    @media (min-width: 1200px) {
+      .two-column-list,
+      .two-column-grid {
+        padding-bottom: 32px !important;
+      }
+      /* Fix height to use container height instead of viewport */
+      .app-container {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: 100% !important;
+        max-height: 100% !important;
+      }
+      /* Ensure scrollable areas respect container bounds */
+      .two-column-list {
+        max-height: none !important;
       }
     }
     
@@ -542,10 +690,12 @@
       flex-shrink: 0;
       padding-top: 8px;
     }
-    /* Desktop - constrain prayer view width */
+    /* Desktop - constrain prayer view width and height */
     @media (min-width: 1200px) {
       .prayer-view-container {
         max-width: 540px;
+        height: 100% !important;
+        max-height: 100% !important;
       }
     }
     @media (min-width: 1400px) {
@@ -585,8 +735,8 @@
     .home-header-row {
       display: none;
     }
-    /* Landscape mode - two columns */
-    @media (orientation: landscape) and (max-width: 1023px) {
+    /* Landscape mode - two columns (phone/small tablet only) */
+    @media (orientation: landscape) and (max-width: 932px) and (max-height: 500px) {
       .home-content {
         flex-direction: row;
         gap: 0;
@@ -675,7 +825,7 @@
      .landscape-separator {
        display: none;
      }
-     @media (orientation: landscape) and (max-width: 1023px) {
+     @media (orientation: landscape) and (max-width: 932px) and (max-height: 500px) {
        .landscape-layout {
          flex-direction: row;
          gap: 0;
@@ -704,11 +854,13 @@
        display: grid !important;
        grid-template-columns: 1fr;
        gap: 6px;
+       align-content: start;
      }
-     @media (orientation: landscape) and (max-width: 1023px) {
+     @media (orientation: landscape) and (max-width: 932px) and (max-height: 500px) {
        .two-column-grid {
          grid-template-columns: 1fr 1fr !important;
          gap: 8px 16px !important;
+         align-content: start !important;
        }
      }
      
@@ -726,7 +878,7 @@
       margin-bottom: 8px;
       text-align: center;
     }
-     @media (orientation: landscape) and (max-width: 1023px) {
+     @media (orientation: landscape) and (max-width: 932px) and (max-height: 500px) {
        .app-header {
          margin-bottom: 6px;
          min-height: 36px;
@@ -746,7 +898,10 @@
      /* Portrait/Landscape only visibility */
      .portrait-only { display: block !important; }
      .landscape-only { display: none !important; }
-    @media (orientation: landscape) and (max-width: 1023px) {
+     
+     /* Phone landscape mode - only for actual phones/small tablets in landscape */
+     /* Uses max-height to detect actual landscape orientation on narrow devices */
+    @media (orientation: landscape) and (max-width: 932px) and (max-height: 500px) {
       .portrait-only { display: none !important; }
       .landscape-only { display: flex !important; }
        .card-header-row { margin-bottom: 4px !important; }
@@ -799,11 +954,6 @@
          font-size: 16px !important;
          padding: 4px 8px !important;
        }
-     }
-     /* Ensure desktop shows portrait layout */
-     @media (min-width: 1024px) {
-       .portrait-only { display: block !important; }
-       .landscape-only { display: none !important; }
      }
      
      /* Card slide animations */
@@ -988,7 +1138,7 @@
         { id: 'c2', name: 'Victoria Greene', peopleIds: ['p5'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
         { id: 'c3', name: 'David Chen', peopleIds: ['p6'], frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
         { id: 'c4', name: 'Tuesday Gaming', peopleIds: ['p7', 'p8', 'p9'], frequency: 'every-2-3-days', prayerPoint: '', includeUnnamedChildren: false, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
-        { id: 'c5', name: 'Estelle Warren', peopleIds: ['p10'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        { id: 'c5', name: 'Grace Warren', peopleIds: ['p10'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
         { id: 'c6', name: 'Jessica Martin', peopleIds: ['p11'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
         { id: 'c7', name: 'Torres Family', peopleIds: ['p12', 'p13', 'p14'], frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: true, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
         { id: 'c8', name: 'Mark Stevens', peopleIds: ['p15'], frequency: 'monthly', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
@@ -1041,6 +1191,8 @@
       const [userName, setUserName] = useState(() => getStored('prayerApp_userName', ''));
       const [onboardingComplete, setOnboardingComplete] = useState(() => getStored('prayerApp_onboardingComplete', false));
       const [onboardingStep, setOnboardingStep] = useState(1);
+      const [tutorialActive, setTutorialActive] = useState(false);
+      const [tutorialStep, setTutorialStep] = useState(0);
       const [nameInput, setNameInput] = useState('');
       const [editingName, setEditingName] = useState(false);
       const [editNameInput, setEditNameInput] = useState('');
@@ -1190,8 +1342,20 @@
         modalButtons: { display: 'flex', gap: '12px' }
       };
 
-      useEffect(() => { localStorage.setItem('prayerApp_people', JSON.stringify(people)); }, [people]);
-      useEffect(() => { localStorage.setItem('prayerApp_cards', JSON.stringify(cards)); }, [cards]);
+      useEffect(() => { 
+        localStorage.setItem('prayerApp_people', JSON.stringify(people)); 
+        // Also update real data backup if not in demo mode
+        if (!demoMode) {
+          localStorage.setItem('prayerApp_realPeople', JSON.stringify(people));
+        }
+      }, [people, demoMode]);
+      useEffect(() => { 
+        localStorage.setItem('prayerApp_cards', JSON.stringify(cards)); 
+        // Also update real data backup if not in demo mode
+        if (!demoMode) {
+          localStorage.setItem('prayerApp_realCards', JSON.stringify(cards));
+        }
+      }, [cards, demoMode]);
       useEffect(() => { if (session) localStorage.setItem('prayerApp_session', JSON.stringify(session)); }, [session]);
 
       // Update session rotation when cards are edited (e.g., frequency changed to daily)
@@ -1231,14 +1395,21 @@
       
       const toggleDemoMode = () => {
         if (demoMode) {
-          // Turn off demo mode - clear data
-          setPeople([]);
-          setCards([]);
+          // Turn off demo mode - restore real user data
+          const realPeople = getStored('prayerApp_realPeople', []);
+          const realCards = getStored('prayerApp_realCards', []);
+          setPeople(realPeople);
+          setCards(realCards);
           setSession(null);
           setDemoMode(false);
           localStorage.setItem('prayerApp_demoMode', 'false');
+          // Restore real data to main storage
+          localStorage.setItem('prayerApp_people', JSON.stringify(realPeople));
+          localStorage.setItem('prayerApp_cards', JSON.stringify(realCards));
         } else {
-          // Turn on demo mode - load demo data
+          // Turn on demo mode - save real data first, then load demo data
+          localStorage.setItem('prayerApp_realPeople', JSON.stringify(people));
+          localStorage.setItem('prayerApp_realCards', JSON.stringify(cards));
           loadDemoData();
           setDemoMode(true);
           localStorage.setItem('prayerApp_demoMode', 'true');
@@ -1297,21 +1468,123 @@
         setOnboardingStep(4);
       };
       
-      const finalizeOnboarding = (showHelp = false) => {
+      const finalizeOnboarding = (startTutorial = false) => {
         // Apply demo mode if chosen
         if (pendingDemoChoice) {
+          // Save current (empty) real data first
+          localStorage.setItem('prayerApp_realPeople', JSON.stringify(people));
+          localStorage.setItem('prayerApp_realCards', JSON.stringify(cards));
           loadDemoData();
           setDemoMode(true);
           localStorage.setItem('prayerApp_demoMode', 'true');
+          // Reset session so button shows "Start Praying" for fresh demo experience
+          setSession(null);
+          localStorage.removeItem('prayerApp_session');
         }
         // Mark onboarding as complete
         setOnboardingComplete(true);
         localStorage.setItem('prayerApp_onboardingComplete', 'true');
-        // Show help if requested, with Getting Started accordion open
-        if (showHelp) {
-          setOpenAccordions({ 'getting-started': true });
-          setHelpOpen(true);
+        // Start tutorial if requested
+        if (startTutorial) {
+          setTutorialActive(true);
+          setTutorialStep(0);
         }
+      };
+      
+      // Tutorial steps configuration
+      const tutorialSteps = [
+        {
+          id: 'welcome',
+          title: 'Welcome to Your Home Screen',
+          text: 'This is your prayer dashboard. From here you can start praying, add people, and access all features of the app.',
+          target: null, // No specific target for welcome
+          position: 'center'
+        },
+        {
+          id: 'start-praying',
+          title: 'Start Your Daily Prayers',
+          text: 'Tap this button to begin your prayer session. Cards will appear for each person or group scheduled for today.',
+          target: 'start-praying-btn',
+          position: 'top'
+        },
+        {
+          id: 'add-person',
+          title: 'Add Someone to Pray For',
+          text: 'Add individuals to your prayer list. You can include their name, organisation, prayer points, and how often you want to pray for them.',
+          target: 'add-person-btn',
+          position: 'top'
+        },
+        {
+          id: 'create-group',
+          title: 'Create Prayer Groups',
+          text: 'Combine people into groups like families or communities. This way you can pray for multiple people on one card.',
+          target: 'create-group-btn',
+          position: 'top'
+        },
+        {
+          id: 'manage',
+          title: 'People & Groups',
+          text: 'View and edit everyone in your prayer list. You can update details, change frequencies, or remove people here.',
+          target: 'manage-btn',
+          position: 'top'
+        },
+        {
+          id: 'history',
+          title: 'Prayer History',
+          text: 'See your prayer history for each person. A calendar view shows which days you prayed and what prayer points were used.',
+          target: 'history-btn',
+          position: 'top'
+        },
+        {
+          id: 'help',
+          title: 'How to Use',
+          text: 'Tap this button anytime to access detailed help and instructions for all features.',
+          target: 'help-btn',
+          position: 'bottom'
+        },
+        {
+          id: 'backup',
+          title: 'Backup & Restore',
+          text: 'Your data is stored on this device. Use this button to download a backup or restore from a previous backup.',
+          target: 'backup-btn',
+          position: 'bottom'
+        },
+        {
+          id: 'demo',
+          title: 'Demo Mode',
+          text: 'Toggle Demo Mode on or off anytime to explore the app with sample data. Great for learning how everything works before adding your own people.',
+          target: 'demo-btn',
+          position: 'bottom'
+        },
+        {
+          id: 'finish',
+          title: "You're Ready!",
+          text: demoMode 
+            ? "Demo mode is active with sample data. Try tapping 'Start Praying' to see how it works! You can restart this tutorial from the How to Use section."
+            : "You're all set! Start by adding someone to pray for, or try Demo Mode to explore with sample data. You can restart this tutorial from the How to Use section.",
+          target: null,
+          position: 'center'
+        }
+      ];
+      
+      const nextTutorialStep = () => {
+        if (tutorialStep < tutorialSteps.length - 1) {
+          setTutorialStep(tutorialStep + 1);
+        } else {
+          setTutorialActive(false);
+          setTutorialStep(0);
+        }
+      };
+      
+      const skipTutorial = () => {
+        setTutorialActive(false);
+        setTutorialStep(0);
+      };
+      
+      const restartTutorial = () => {
+        setHelpOpen(false);
+        setTutorialActive(true);
+        setTutorialStep(0);
       };
       
       // Legacy function for compatibility (if needed)
@@ -1340,13 +1613,18 @@
       };
       
       const downloadData = () => {
+        // Always export real user data, not demo data
+        // If in demo mode, get the saved real data from localStorage
+        const exportPeople = demoMode ? getStored('prayerApp_realPeople', []) : people;
+        const exportCards = demoMode ? getStored('prayerApp_realCards', []) : cards;
+        
         const exportData = {
           version: DATA_VERSION,
           exportDate: new Date().toISOString(),
           userName,
-          people,
-          cards,
-          demoMode
+          people: exportPeople,
+          cards: exportCards
+          // Note: demoMode is intentionally not exported - it's a viewing preference, not user data
         };
         const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1386,18 +1664,23 @@
       const confirmUpload = () => {
         if (!pendingUploadData) return;
         
-        // Restore data
-        setPeople(pendingUploadData.people || []);
-        setCards(pendingUploadData.cards || []);
+        // Restore data - always restore as real user data, not demo mode
+        const restoredPeople = pendingUploadData.people || [];
+        const restoredCards = pendingUploadData.cards || [];
+        
+        setPeople(restoredPeople);
+        setCards(restoredCards);
         setUserName(pendingUploadData.userName || '');
-        setDemoMode(pendingUploadData.demoMode || false);
+        setDemoMode(false); // Always turn off demo mode when restoring
         setSession(null);
         
-        // Save to localStorage
-        localStorage.setItem('prayerApp_people', JSON.stringify(pendingUploadData.people || []));
-        localStorage.setItem('prayerApp_cards', JSON.stringify(pendingUploadData.cards || []));
+        // Save to localStorage - both main storage and real data backup
+        localStorage.setItem('prayerApp_people', JSON.stringify(restoredPeople));
+        localStorage.setItem('prayerApp_cards', JSON.stringify(restoredCards));
+        localStorage.setItem('prayerApp_realPeople', JSON.stringify(restoredPeople));
+        localStorage.setItem('prayerApp_realCards', JSON.stringify(restoredCards));
         localStorage.setItem('prayerApp_userName', JSON.stringify(pendingUploadData.userName || ''));
-        localStorage.setItem('prayerApp_demoMode', pendingUploadData.demoMode ? 'true' : 'false');
+        localStorage.setItem('prayerApp_demoMode', 'false');
         localStorage.removeItem('prayerApp_session');
         
         setPendingUploadData(null);
@@ -1743,15 +2026,22 @@
         const card = cards.find(c => c.id === cardId);
         if (!card) return false;
         
-        for (const pid of card.peopleIds) { 
-          const p = people.find(x => x.id === pid); 
-          if (p?.individualCheckbox && !checked[cardId][pid]) return false; 
+        // Get valid people from the card (people that exist in our people array)
+        const validPeople = card.peopleIds.map(pid => people.find(x => x.id === pid)).filter(Boolean);
+        
+        // If the card has peopleIds but no valid people found, consider it incomplete
+        // This handles edge cases where people array might be out of sync
+        if (card.peopleIds.length > 0 && validPeople.length === 0 && !card.includeUnnamedChildren) {
+          return false;
         }
         
-        const hasGroupedPeople = card.peopleIds.some(pid => { 
-          const p = people.find(x => x.id === pid); 
-          return p && !p.individualCheckbox; 
-        });
+        // Check individual checkboxes
+        for (const p of validPeople) { 
+          if (p.individualCheckbox && !checked[cardId][p.id]) return false; 
+        }
+        
+        // Check grouped people
+        const hasGroupedPeople = validPeople.some(p => !p.individualCheckbox);
         
         if ((hasGroupedPeople || card.includeUnnamedChildren) && !checked[cardId]['_group']) return false;
         
@@ -1941,6 +2231,23 @@
 
       const frequencyOrder = ['daily', 'every-2-3-days', 'weekly', 'monthly'];
       const getPersonFrequency = (p) => { const c = cards.find(x => x.peopleIds.includes(p.id)); return c?.frequency || 'daily'; };
+      
+      // Get dynamic display name for a card - for non-group cards, derive from person data
+      const getCardDisplayName = (card) => {
+        if (!card) return '';
+        // For groups, use the stored group name
+        if (card.isGroup) return card.name;
+        // For single-person cards, derive from the actual person data
+        if (card.peopleIds.length === 1) {
+          const person = people.find(p => p.id === card.peopleIds[0]);
+          if (person) {
+            const isOrg = !person.firstName && !person.lastName && person.organisation;
+            return isOrg ? person.organisation : `${person.firstName} ${person.lastName}`.trim();
+          }
+        }
+        // Fallback to stored name
+        return card.name;
+      };
       const getSortedPeople = () => {
         let sorted = [...people].sort((a, b) => {
           if (sortBy === 'firstName') return a.firstName.localeCompare(b.firstName);
@@ -2249,7 +2556,7 @@
 
         return (
           <div style={cardStyle}>
-            <div className="card-header-row" style={styles.cardHeaderRow}><div style={styles.cardTitle}>{card.name}</div><div style={styles.cardFrequency}>{freq}</div></div>
+            <div className="card-header-row" style={styles.cardHeaderRow}><div style={styles.cardTitle}>{getCardDisplayName(card)}</div><div style={styles.cardFrequency}>{freq}</div></div>
             
             {/* Portrait layout - original with prayer points under each name */}
             <div 
@@ -2626,6 +2933,191 @@
         return null;
       };
       
+      const renderTutorial = () => {
+        if (!tutorialActive) return null;
+        
+        const step = tutorialSteps[tutorialStep];
+        if (!step) return null;
+        
+        // Get target element position
+        let targetRect = null;
+        let targetEl = null;
+        if (step.target) {
+          targetEl = document.getElementById(step.target);
+          if (targetEl) {
+            targetRect = targetEl.getBoundingClientRect();
+          }
+        }
+        
+        // Calculate tooltip position with smart positioning
+        const padding = 16;
+        const tooltipWidth = 300;
+        const tooltipEstimatedHeight = 200; // Estimated height for calculations
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        // Determine actual position (may flip if not enough space)
+        const getActualPosition = () => {
+          if (step.position === 'center' || !targetRect) return 'center';
+          
+          const spaceAbove = targetRect.top;
+          const spaceBelow = windowHeight - targetRect.bottom;
+          
+          if (step.position === 'top') {
+            // Prefer top, but flip to bottom if not enough space
+            return spaceAbove > tooltipEstimatedHeight + padding ? 'top' : 'bottom';
+          } else if (step.position === 'bottom') {
+            // Prefer bottom, but flip to top if not enough space
+            return spaceBelow > tooltipEstimatedHeight + padding ? 'bottom' : 'top';
+          }
+          return 'center';
+        };
+        
+        const actualPosition = getActualPosition();
+        
+        const getTooltipStyle = () => {
+          if (actualPosition === 'center' || !targetRect) {
+            // Centered on screen
+            return {
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)'
+            };
+          }
+          
+          // Calculate horizontal position (centered on target, but clamped to screen)
+          let left = targetRect.left + (targetRect.width / 2) - (tooltipWidth / 2);
+          left = Math.max(padding, Math.min(left, windowWidth - tooltipWidth - padding));
+          
+          if (actualPosition === 'top') {
+            // Tooltip above the element
+            const bottomPos = windowHeight - targetRect.top + padding + 8; // 8px extra for highlight padding
+            return {
+              position: 'fixed',
+              bottom: `${bottomPos}px`,
+              left: `${left}px`,
+              width: `${tooltipWidth}px`,
+              maxHeight: `${targetRect.top - padding - 8}px`,
+              overflowY: 'auto'
+            };
+          } else if (actualPosition === 'bottom') {
+            // Tooltip below the element
+            const topPos = targetRect.bottom + padding + 8; // 8px extra for highlight padding
+            return {
+              position: 'fixed',
+              top: `${topPos}px`,
+              left: `${left}px`,
+              width: `${tooltipWidth}px`,
+              maxHeight: `${windowHeight - targetRect.bottom - padding - 8}px`,
+              overflowY: 'auto'
+            };
+          }
+          
+          return {
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
+          };
+        };
+        
+        // Get arrow class based on actual position
+        const getArrowClass = () => {
+          if (actualPosition === 'top') return 'top';
+          if (actualPosition === 'bottom') return 'bottom';
+          return '';
+        };
+        
+        return (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9997, pointerEvents: 'auto' }}>
+            {/* Overlay - only show solid overlay when no target element (centered steps) */}
+            {!targetRect && (
+              <div 
+                className="tutorial-overlay"
+                onClick={skipTutorial}
+                style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9998 }}
+              />
+            )}
+            
+            {/* Click handler for when there IS a target - transparent overlay for click detection */}
+            {targetRect && (
+              <div 
+                onClick={skipTutorial}
+                style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', zIndex: 9998 }}
+              />
+            )}
+            
+            {/* Highlight around target element - the box-shadow creates the darkened overlay with a clear cutout */}
+            {targetRect && (
+              <div 
+                className="tutorial-highlight"
+                style={{
+                  position: 'fixed',
+                  top: `${targetRect.top - 8}px`,
+                  left: `${targetRect.left - 8}px`,
+                  width: `${targetRect.width + 16}px`,
+                  height: `${targetRect.height + 16}px`,
+                  boxShadow: '0 0 0 4px rgba(184,122,74,0.8), 0 0 0 9999px rgba(0,0,0,0.75)',
+                  borderRadius: '12px',
+                  pointerEvents: 'none',
+                  zIndex: 9999,
+                  background: 'transparent'
+                }}
+              />
+            )}
+            
+            {/* Tooltip */}
+            <div 
+              className="tutorial-tooltip"
+              style={{
+                ...getTooltipStyle(),
+                zIndex: 10000
+              }}
+            >
+              {step.position !== 'center' && targetRect && (
+                <div className={`tutorial-tooltip-arrow ${getArrowClass()}`} />
+              )}
+              <div className="tutorial-title">{step.title}</div>
+              <div className="tutorial-text">{step.text}</div>
+              
+              <div className="tutorial-buttons">
+                {tutorialStep > 0 && (
+                  <button 
+                    className="tutorial-btn tutorial-btn-secondary"
+                    onClick={() => setTutorialStep(tutorialStep - 1)}
+                  >
+                    Back
+                  </button>
+                )}
+                <button 
+                  className="tutorial-btn tutorial-btn-secondary"
+                  onClick={skipTutorial}
+                >
+                  Skip
+                </button>
+                <button 
+                  className="tutorial-btn tutorial-btn-primary"
+                  onClick={nextTutorialStep}
+                >
+                  {tutorialStep === tutorialSteps.length - 1 ? 'Finish' : 'Next'}
+                </button>
+              </div>
+              
+              {/* Progress dots */}
+              <div className="tutorial-progress">
+                {tutorialSteps.map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={`tutorial-dot ${idx === tutorialStep ? 'active' : ''} ${idx < tutorialStep ? 'completed' : ''}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      };
+      
       const renderHelp = () => {
         const helpSections = [
           {
@@ -2797,6 +3289,23 @@
             </div>
             <div className="page-title">How to Use</div>
             <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '100px' }}>
+              {/* Restart Tutorial button */}
+              <div style={{ padding: '0 0 16px 0', textAlign: 'center' }}>
+                <button 
+                  style={{ 
+                    ...styles.btnSecondary, 
+                    padding: '12px 24px', 
+                    fontSize: '14px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onClick={restartTutorial}
+                >
+                  <span style={{ fontSize: '16px' }}>▶</span> Take the App Tour
+                </button>
+              </div>
+              
               {helpSections.map(section => (
                 <div key={section.id} className="help-section">
                   <div className="help-accordion">
@@ -2826,9 +3335,9 @@
             
             {/* Top row with info, sync, and demo buttons */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <button className="home-circle-btn" onClick={() => setHelpOpen(true)} title="How to Use">i</button>
-              <button className="home-circle-btn symbol" onClick={() => { setDataModalOpen(true); setDataModalStep('main'); }} title="Backup & Restore">⇅</button>
-              <button className={`home-circle-btn ${demoMode ? 'active' : ''}`} onClick={toggleDemoMode} title="Demo Mode">D</button>
+              <button id="help-btn" className="home-circle-btn" onClick={() => setHelpOpen(true)} title="How to Use">i</button>
+              <button id="backup-btn" className="home-circle-btn symbol" onClick={() => { setDataModalOpen(true); setDataModalStep('main'); }} title="Backup & Restore">⇅</button>
+              <button id="demo-btn" className={`home-circle-btn ${demoMode ? 'active' : ''}`} onClick={toggleDemoMode} title="Demo Mode">D</button>
             </div>
             
             {/* Greeting - portrait only */}
@@ -2882,6 +3391,7 @@
 {/* Circular Start Praying button */}
                  <div className="home-start-btn-wrapper home-start-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '16px 0', marginBottom: '16px' }}>
                    <button 
+                     id="start-praying-btn"
                      className="home-start-btn"
                      style={{
                        width: '130px',
@@ -2912,6 +3422,7 @@
                  {/* Action buttons stacked (portrait only) */}
                  <div className="home-actions-portrait" style={{ flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                    <button 
+                     id="add-person-btn"
                      className="home-action-btn"
                      style={{ ...styles.btnSecondary, width: '180px', padding: '11px 16px', fontSize: '14px' }} 
                      onClick={() => setEditingPerson({})}
@@ -2919,6 +3430,7 @@
                      + Add Person
                    </button>
                    <button 
+                     id="create-group-btn"
                      className="home-action-btn"
                      style={{ ...styles.btnSecondary, width: '180px', padding: '11px 16px', fontSize: '14px' }} 
                      onClick={() => setScreen('createGroup')}
@@ -2954,7 +3466,7 @@
                               textDecoration: isComplete ? 'line-through' : 'none',
                               opacity: isComplete ? 0.6 : 1
                             }}>
-                              {card.name}
+                              {getCardDisplayName(card)}
                             </span>
                             {idx < todaysCards.length - 1 && <span style={{ color: colors.textTertiary }}> · </span>}
                           </span>
@@ -2979,6 +3491,7 @@
                boxShadow: '0 -4px 20px rgba(0,0,0,0.08)'
              }}>
                <button 
+                 id="manage-btn"
                  style={{
                    flex: 1,
                    padding: '14px 8px',
@@ -3003,6 +3516,7 @@
                  <span>People & Groups</span>
                </button>
                <button 
+                 id="history-btn"
                  style={{
                    flex: 1,
                    padding: '14px 8px',
@@ -3067,14 +3581,27 @@
                <div className="data-modal-overlay" onClick={() => { setDataModalOpen(false); setDataModalStep('main'); setPendingUploadData(null); }}>
                  <div className="data-modal" onClick={(e) => e.stopPropagation()}>
                    {dataModalStep === 'main' ? (
-                     <>
-                       <h3>Backup & Restore</h3>
-                       <div className="data-modal-desc">
-                         Download a backup of your prayer list to keep it safe, or restore from a previous backup.
-                       </div>
-                       <button className="data-modal-btn data-modal-btn-download" onClick={downloadData}>
-                         <span>↓</span> Download Backup
-                       </button>
+                    <>
+                      <h3>Backup & Restore</h3>
+                      <div className="data-modal-desc">
+                        Download a backup of your prayer list to keep it safe, or restore from a previous backup.
+                      </div>
+                      {demoMode && (
+                        <div style={{ 
+                          fontSize: '12px', 
+                          color: colors.accent, 
+                          background: 'rgba(184, 122, 74, 0.1)', 
+                          padding: '8px 12px', 
+                          borderRadius: '8px', 
+                          marginBottom: '12px',
+                          textAlign: 'center'
+                        }}>
+                          ℹ️ Demo mode is on. This will backup your <strong>real</strong> prayer data, not the demo data.
+                        </div>
+                      )}
+                      <button className="data-modal-btn data-modal-btn-download" onClick={downloadData}>
+                        <span>↓</span> Download Backup
+                      </button>
                        <label className="data-modal-btn data-modal-btn-upload" style={{ cursor: 'pointer' }}>
                          <span>↑</span> Restore from Backup
                          <input 
@@ -3121,27 +3648,34 @@
         const showList = session?.currentView === 'list' || allDone;
         
         if (showList) return (
-          <div className="app-container" style={styles.container}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
             <div className="app-header">
               <button style={styles.btnText} onClick={() => setScreen('home')}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Home</button>
               {!allDone && <button style={styles.btnText} onClick={() => setSession(s => ({ ...s, currentView: 'flashcard' }))}>Cards</button>}
             </div>
             <div className="page-title">{allDone ? 'All prayers complete' : "Today's Prayers"}</div>
-            <div className="two-column-grid" style={{ maxHeight: 'calc(100vh - 140px)', overflowY: 'auto', padding: '4px 6px', margin: '0 -6px' }}>
-              {session?.todaysList.map(cid => <div key={cid}>{renderPrayerCard(cid, false)}</div>)}
+            <div className="two-column-grid scrollable-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 6px', margin: '0 -6px', minHeight: 0 }}>
+              {(session?.cardsInRotation || []).map(cid => <div key={cid}>{renderPrayerCard(cid, false)}</div>)}
             </div>
           </div>
         );
         
         const cid = allCards[currentCardIndex % allCards.length];
         const currentCardComplete = isCardFullyChecked(cid);
-        const isLastIncomplete = incompleteCount <= 1 && !currentCardComplete;
-        const noMoreIncomplete = incompleteCount === 0 || (incompleteCount === 1 && currentCardComplete);
+        const isLastIncomplete = incompleteCount === 1 && !currentCardComplete;
+        const onlyOneCardTotal = allCards.length === 1;
+        // Disable navigation when:
+        // - No incomplete cards left, OR
+        // - Only one card total for the day, OR
+        // - Only one incomplete card left (and we're on it)
+        const disableNavigation = incompleteCount === 0 || onlyOneCardTotal || isLastIncomplete;
         const disabledBtnStyle = { ...styles.swipeButton, opacity: 0.3, cursor: 'default' };
         
         // Determine hint text
         let hintText;
-        if (currentCardComplete) {
+        if (onlyOneCardTotal) {
+          hintText = currentCardComplete ? 'Complete!' : 'Only card for today';
+        } else if (currentCardComplete) {
           hintText = 'Complete! Swipe for next';
         } else if (isLastIncomplete) {
           hintText = 'Last card';
@@ -3158,10 +3692,10 @@
             <div 
               ref={cardScrollRef}
               className={`prayer-card-area ${slideDirection === 'right' ? 'card-slide-right' : slideDirection === 'left' ? 'card-slide-left' : ''}`}
-              onTouchStart={handleTouchStart} 
-              onTouchEnd={handleTouchEnd}
+              onTouchStart={disableNavigation ? undefined : handleTouchStart} 
+              onTouchEnd={disableNavigation ? undefined : handleTouchEnd}
               onScroll={checkCardScroll}
-              style={{ touchAction: 'pan-y', position: 'relative' }}
+              style={{ touchAction: disableNavigation ? 'auto' : 'pan-y', position: 'relative' }}
               key={cid}
             >
               {renderPrayerCard(cid, true)}
@@ -3173,10 +3707,10 @@
             </div>
             <div className="prayer-nav-area">
               <div style={styles.swipeButtons}>
-                <button className="prayer-nav-button" style={noMoreIncomplete ? disabledBtnStyle : styles.swipeButton} onClick={noMoreIncomplete ? undefined : swipePrev} disabled={noMoreIncomplete}>‹</button>
-                <button className="prayer-nav-button" style={noMoreIncomplete ? disabledBtnStyle : styles.swipeButton} onClick={noMoreIncomplete ? undefined : swipeNext} disabled={noMoreIncomplete}>›</button>
+                <button className="prayer-nav-button" style={disableNavigation ? disabledBtnStyle : styles.swipeButton} onClick={disableNavigation ? undefined : swipePrev} disabled={disableNavigation}>‹</button>
+                <button className="prayer-nav-button" style={disableNavigation ? disabledBtnStyle : styles.swipeButton} onClick={disableNavigation ? undefined : swipeNext} disabled={disableNavigation}>›</button>
               </div>
-              <div className="portrait-only" style={styles.swipeHint}>{hintText} · swipe or use arrows</div>
+              <div className="portrait-only" style={styles.swipeHint}>{hintText}{!disableNavigation && ' · swipe or use arrows'}</div>
             </div>
           </div>
         );
@@ -3203,7 +3737,7 @@
                         <div key={p.id} style={listItemStyle} onClick={() => setEditingPerson(p)}>
                           <div style={{ flex: 1 }}>
                             <div style={{ ...styles.listItemName, fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}{p.organisation && !isOrg && <span style={{ fontSize: '12px', color: colors.textTertiary, fontStyle: 'italic', fontWeight: 'normal' }}> · {p.organisation}</span>}{p.isChild && <span style={{ color: colors.textTertiary, fontSize: '12px' }}> (child)</span>}</div>
-                            {isGrouped && <div style={{ fontSize: '12px', color: colors.primary, marginTop: '2px' }}>↳ {c.name}</div>}
+                            {isGrouped && <div style={{ fontSize: '12px', color: colors.primary, marginTop: '2px' }}>↳ {getCardDisplayName(c)}</div>}
                           </div>
                           <div style={{ fontSize: '12px', color: colors.textTertiary, textAlign: 'right', whiteSpace: 'nowrap' }}>{formatFrequency(c?.frequency)} · {getPrayerCountThisMonth(p.id)}×</div>
                         </div>
@@ -3235,7 +3769,7 @@
                           <div key={p.id} style={listItemStyle} onClick={() => setEditingPerson(p)}>
                             <div style={{ flex: 1 }}>
                               <div style={{ ...styles.listItemName, fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}{p.organisation && !isOrg && <span style={{ fontSize: '12px', color: colors.textTertiary, fontStyle: 'italic', fontWeight: 'normal' }}> · {p.organisation}</span>}{p.isChild && <span style={{ color: colors.textTertiary, fontSize: '12px' }}> (child)</span>}</div>
-                              {isGrouped && <div style={{ fontSize: '12px', color: colors.primary, marginTop: '2px' }}>↳ {c.name}</div>}
+                              {isGrouped && <div style={{ fontSize: '12px', color: colors.primary, marginTop: '2px' }}>↳ {getCardDisplayName(c)}</div>}
                             </div>
                             <div style={{ fontSize: '12px', color: colors.textTertiary, textAlign: 'right', whiteSpace: 'nowrap' }}>{getPrayerCountThisMonth(p.id)}×</div>
                           </div>
@@ -3263,7 +3797,7 @@
                       const count = c.peopleIds.length; 
                       return (
                         <div key={c.id} style={listItemStyle} onClick={() => setEditingCard(c)}>
-                          <div style={styles.listItemName}>{c.name}</div>
+                          <div style={styles.listItemName}>{getCardDisplayName(c)}</div>
                           <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '2px' }}>{count} {count === 1 ? 'person' : 'people'}</div>
                           <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '4px' }}>{formatFrequency(c.frequency)}</div>
                         </div>
@@ -3288,7 +3822,7 @@
                         const count = c.peopleIds.length;
                         return (
                           <div key={c.id} style={listItemStyle} onClick={() => setEditingCard(c)}>
-                            <div style={styles.listItemName}>{c.name}</div>
+                            <div style={styles.listItemName}>{getCardDisplayName(c)}</div>
                             <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '2px' }}>{count} {count === 1 ? 'person' : 'people'}</div>
                           </div>
                         );
@@ -3336,7 +3870,7 @@
         );
         
         return (
-          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
             <div className="app-header">
               <button style={styles.btnText} onClick={() => { setSearchTerm(''); setScreen('home'); }}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button>
               <input 
@@ -3375,7 +3909,7 @@
             </div>
             
             {/* 2-column grid list */}
-            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 4px 6px', margin: '0 -6px' }}>
+            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 4px 6px', margin: '0 -6px', minHeight: 0 }}>
               {manageTab === 'people' ? renderPeopleList() : renderGroupsList()}
             </div>
           </div>
@@ -3412,7 +3946,7 @@
               >
                 <div>
                   <div style={{ fontSize: '12px', color: colors.textTertiary, marginBottom: '2px' }}>{personCard.isGroup ? 'PART OF GROUP' : 'PRAYER CARD'}</div>
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: colors.primary }}>{personCard.name}</div>
+                  <div style={{ fontSize: '16px', fontWeight: '600', color: colors.primary }}>{getCardDisplayName(personCard)}</div>
                 </div>
                 <div style={{ fontSize: '20px', color: colors.textTertiary }}>→</div>
               </div>
@@ -3518,7 +4052,7 @@
         const sel = people.filter(p => selectedPeopleForGroup.includes(p.id));
         const create = () => { if (!groupForm.name.trim()) { alert('Name required'); return; } createGroup({ ...groupForm, peopleIds: selectedPeopleForGroup, checkboxOverrides }); setSelectedPeopleForGroup([]); setScreen('home'); };
         if (groupStep === 1) return (
-          <div className="app-container" style={styles.container}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
             <div className="app-header">
               <button style={styles.btnText} onClick={() => { setSelectedPeopleForGroup([]); setSearchTerm(''); setScreen('home'); }}>Cancel</button>
               <input 
@@ -3564,7 +4098,7 @@
               const filtered = getFilteredSortedPeople();
               if (searchTerm && !filtered.length) return <div style={styles.emptyState}>No results for "{searchTerm}"</div>;
               return (
-              <div style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '4px 6px', margin: '0 -6px' }}>
+              <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 6px', margin: '0 -6px', minHeight: 0 }}>
                 {sortBy !== 'frequency' ? (
                   <div className="two-column-grid">
                     {filtered.map(p => { 
@@ -4188,7 +4722,7 @@
                         const count = c.peopleIds.length; 
                         return (
                           <div key={c.id} style={listItemStyle} onClick={() => { setViewingStats(c); setStatsMonth(new Date()); setSelectedHistoryDate(null); }}>
-                            <div style={styles.listItemName}>{c.name}</div>
+                            <div style={styles.listItemName}>{getCardDisplayName(c)}</div>
                             <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '2px' }}>{count} {count === 1 ? 'person' : 'people'}</div>
                             <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '4px' }}>{formatFrequency(c.frequency)} · {getCardPrayerCountThisMonth(c)}×</div>
                           </div>
@@ -4213,7 +4747,7 @@
                           const count = c.peopleIds.length;
                           return (
                             <div key={c.id} style={listItemStyle} onClick={() => { setViewingStats(c); setStatsMonth(new Date()); setSelectedHistoryDate(null); }}>
-                              <div style={styles.listItemName}>{c.name}</div>
+                              <div style={styles.listItemName}>{getCardDisplayName(c)}</div>
                               <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '2px' }}>{count} {count === 1 ? 'person' : 'people'}</div>
                               <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '4px' }}>{getCardPrayerCountThisMonth(c)}×</div>
                             </div>
@@ -4227,7 +4761,7 @@
         };
         
         return (
-          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
             <div className="app-header">
               <button style={styles.btnText} onClick={() => { setSearchTerm(''); setScreen('home'); }}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button>
               <input 
@@ -4265,7 +4799,7 @@
             </div>
             
             {/* 2-column grid list */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 4px 6px', margin: '0 -6px' }}>
+            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 4px 6px', margin: '0 -6px', minHeight: 0 }}>
               {historyTab === 'people' ? renderHistoryPeopleList() : renderHistoryGroupsList()}
             </div>
           </div>
@@ -4296,6 +4830,7 @@
       return (
         <div className="desktop-wrapper">
           {renderContent()}
+          {tutorialActive && screen === 'home' && renderTutorial()}
         </div>
       );
     }
