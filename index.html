@@ -57,8 +57,8 @@
     
     /* Home page circular buttons - unified style */
     .home-circle-btn {
-      width: 28px;
-      height: 28px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -66,7 +66,7 @@
       border: 1.5px solid #D4C8B8;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 18px;
       font-weight: 600;
       font-style: italic;
       font-family: Georgia, serif;
@@ -3387,7 +3387,7 @@
           <div className="app-container" style={{ ...styles.container, position: 'relative', display: 'flex', flexDirection: 'column', height: '100vh', paddingBottom: '60px', overflow: 'hidden' }}>
             
             {/* Top row with info, sync, and demo buttons */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <button id="help-btn" className="home-circle-btn" onClick={() => setHelpOpen(true)} title="How to Use">i</button>
               <button id="backup-btn" className="home-circle-btn symbol" onClick={() => { setDataModalOpen(true); setDataModalStep('main'); }} title="Backup & Restore">⇅</button>
               <button id="demo-btn" className={`home-circle-btn ${demoMode ? 'active' : ''}`} onClick={toggleDemoMode} title="Demo Mode">D</button>
@@ -3396,19 +3396,19 @@
             {/* Greeting - portrait only */}
             {(() => {
               const greetingText = showContinue ? `Welcome back, ${userName || 'Friend'}` : getGreeting(userName || 'Friend');
-              // Adjust font size based on text length to prevent line breaks, then increase by 50%
+              // Adjust font size based on text length to prevent line breaks, then increase by 70%
               const greetingLength = greetingText.length;
               const baseFontSize = greetingLength > 24 ? 18 : greetingLength > 20 ? 20 : greetingLength > 16 ? 22 : 24;
-              const greetingFontSize = `${Math.round(baseFontSize * 1.5)}px`;
+              const greetingFontSize = `${Math.round(baseFontSize * 1.7)}px`;
               const baseLandscapeSize = greetingLength > 24 ? 16 : greetingLength > 20 ? 17 : greetingLength > 16 ? 18 : 20;
-              const landscapeFontSize = `${Math.round(baseLandscapeSize * 1.5)}px`;
+              const landscapeFontSize = `${Math.round(baseLandscapeSize * 1.7)}px`;
               return (
-                <div className="home-greeting portrait-only" style={{ textAlign: 'center', marginBottom: '8px', padding: '0 20px', position: 'relative' }}>
+                <div className="home-greeting portrait-only" style={{ textAlign: 'center', marginBottom: '12px', padding: '0 20px', position: 'relative' }}>
                   <div className="home-welcome" style={{ ...styles.greeting, fontSize: greetingFontSize, marginTop: 0, marginBottom: '2px', whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     {greetingText}
                     <button className="edit-name-btn" onClick={openEditName} title="Edit name" style={{ marginLeft: '0', verticalAlign: 'middle' }}>✎</button>
                   </div>
-                  <div className="home-subtext" style={{ ...styles.subGreeting, fontSize: '14px', marginBottom: '0' }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
+                  <div className="home-subtext" style={{ ...styles.subGreeting, fontSize: '16px', marginBottom: '0' }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
                 </div>
               );
             })()}
@@ -3418,9 +3418,9 @@
               const greetingText = showContinue ? `Welcome back, ${userName || 'Friend'}` : getGreeting(userName || 'Friend');
               const greetingLength = greetingText.length;
               const baseLandscapeSize = greetingLength > 24 ? 16 : greetingLength > 20 ? 17 : greetingLength > 16 ? 18 : 20;
-              const landscapeFontSize = `${Math.round(baseLandscapeSize * 1.5)}px`;
+              const landscapeFontSize = `${Math.round(baseLandscapeSize * 1.7)}px`;
               return (
-                <div className="landscape-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '16px', padding: '0 20px' }}>
+                <div className="landscape-only" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '20px', padding: '0 20px' }}>
                   <div style={{ flex: '0 0 auto', width: 'calc(50% - 1px)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <div className="home-welcome" style={{ fontSize: landscapeFontSize, whiteSpace: 'nowrap', fontFamily: '"Oranienbaum", serif', fontWeight: '400', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       {greetingText}
@@ -3428,7 +3428,7 @@
                     </div>
                   </div>
                   <div style={{ flex: '1', display: 'flex', justifyContent: 'center', alignItems: 'center', paddingLeft: '24px' }}>
-                    <div style={{ fontSize: '14px', color: colors.textSecondary }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
+                    <div style={{ fontSize: '16px', color: colors.textSecondary }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
                   </div>
                 </div>
               );
@@ -3442,19 +3442,19 @@
                 <div className="home-spacer-top portrait-only" style={{ flex: '0 0 auto', minHeight: '8px', maxHeight: '20px' }} />
                 
 {/* Circular Start Praying button */}
-                 <div className="home-start-btn-wrapper home-start-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '16px 0', marginBottom: '16px' }}>
+                 <div className="home-start-btn-wrapper home-start-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px 0', marginBottom: '20px' }}>
                    <button 
                      id="start-praying-btn"
                      className="home-start-btn"
                      style={{
-                       width: '130px',
-                       height: '130px',
+                       width: '170px',
+                       height: '170px',
                        borderRadius: '50%',
                        background: colors.primaryGradient,
                        border: 'none',
                        boxShadow: `0 8px 32px rgba(184,122,74,0.4), 0 4px 12px rgba(184,122,74,0.3), inset 0 2px 0 rgba(255,255,255,0.2)`,
                        color: colors.primaryText,
-                       fontSize: '17px',
+                       fontSize: '20px',
                        fontWeight: '700',
                        cursor: 'pointer',
                        fontFamily: 'inherit',
@@ -3463,7 +3463,7 @@
                        justifyContent: 'center',
                        textAlign: 'center',
                        lineHeight: '1.2',
-                       padding: '16px',
+                       padding: '20px',
                        transition: 'transform 0.15s ease, box-shadow 0.15s ease'
                      }}
                      onClick={showContinue ? () => setScreen('prayer') : startPraying}
@@ -3473,11 +3473,11 @@
                  </div>
                  
                  {/* Action buttons stacked (portrait only) */}
-                 <div className="home-actions-portrait" style={{ flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                 <div className="home-actions-portrait" style={{ flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                    <button 
                      id="add-person-btn"
                      className="home-action-btn"
-                     style={{ ...styles.btnSecondary, width: '180px', padding: '11px 16px', fontSize: '14px' }} 
+                     style={{ ...styles.btnSecondary, width: '220px', padding: '14px 20px', fontSize: '16px' }} 
                      onClick={() => setEditingPerson({})}
                    >
                      + Add Person
@@ -3485,7 +3485,7 @@
                    <button 
                      id="create-group-btn"
                      className="home-action-btn"
-                     style={{ ...styles.btnSecondary, width: '180px', padding: '11px 16px', fontSize: '14px' }} 
+                     style={{ ...styles.btnSecondary, width: '220px', padding: '14px 20px', fontSize: '16px' }} 
                      onClick={() => setScreen('createGroup')}
                    >
                      Create Group
@@ -3505,11 +3505,11 @@
               {/* Right column: Today's prayers only */}
               <div className="home-right">
                 <div className="home-right-content">
-                  <div className="home-prayers-heading" style={{ fontSize: '11px', fontWeight: '700', color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', textAlign: 'center' }}>Today's Prayers</div>
+                  <div className="home-prayers-heading" style={{ fontSize: '13px', fontWeight: '700', color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', textAlign: 'center' }}>Today's Prayers</div>
                   {!count ? (
-                    <div className="home-prayers-list" style={{ color: colors.textTertiary, fontSize: '13px', textAlign: 'center' }}>No prayers due today</div>
+                    <div className="home-prayers-list" style={{ color: colors.textTertiary, fontSize: '15px', textAlign: 'center' }}>No prayers due today</div>
                   ) : (
-                    <div className="home-prayers-list" style={{ fontSize: '13px', color: colors.textSecondary, lineHeight: '1.9', textAlign: 'center' }}>
+                    <div className="home-prayers-list" style={{ fontSize: '15px', color: colors.textSecondary, lineHeight: '1.9', textAlign: 'center' }}>
                       {todaysCards.map((card, idx) => {
                         const isComplete = session?.checkedStatus?.[card.id] && isCardFullyChecked(card.id);
                         return (
@@ -3547,9 +3547,9 @@
                  id="manage-btn"
                  style={{
                    flex: 1,
-                   padding: '14px 8px',
-                   paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
-                   fontSize: '13px',
+                   padding: '16px 10px',
+                   paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+                   fontSize: '15px',
                    fontWeight: '600',
                    background: 'transparent',
                    border: 'none',
@@ -3561,20 +3561,20 @@
                    display: 'flex',
                    flexDirection: 'column',
                    alignItems: 'center',
-                   gap: '4px'
+                   gap: '5px'
                  }} 
                  onClick={() => setScreen('manage')}
                >
-                 <span className="portrait-only" style={{ fontSize: '22px', lineHeight: '1', fontWeight: 'normal' }}>⚬⚬</span>
+                 <span className="portrait-only" style={{ fontSize: '26px', lineHeight: '1', fontWeight: 'normal' }}>⚬⚬</span>
                  <span>People & Groups</span>
                </button>
                <button 
                  id="history-btn"
                  style={{
                    flex: 1,
-                   padding: '14px 8px',
-                   paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
-                   fontSize: '13px',
+                   padding: '16px 10px',
+                   paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+                   fontSize: '15px',
                    fontWeight: '600',
                    background: 'transparent',
                    border: 'none',
@@ -3585,11 +3585,11 @@
                    display: 'flex',
                    flexDirection: 'column',
                    alignItems: 'center',
-                   gap: '4px'
+                   gap: '5px'
                  }} 
                  onClick={() => setScreen('stats')}
                >
-                 <span className="portrait-only" style={{ fontSize: '22px', lineHeight: '1', fontWeight: 'normal' }}>↻</span>
+                 <span className="portrait-only" style={{ fontSize: '26px', lineHeight: '1', fontWeight: 'normal' }}>↻</span>
                  <span>Prayer History</span>
                </button>
              </div>
