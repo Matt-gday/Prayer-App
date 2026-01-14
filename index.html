@@ -1819,8 +1819,15 @@
       const showUpdateModal = (worker) => {
         if (worker) {
           setWaitingWorker(worker);
-          setUpdateModalOpen(true);
-          setUpdateDownloaded(false);
+          // Only reset updateDownloaded if modal isn't already open
+          // This prevents resetting after user has already clicked Download
+          setUpdateModalOpen(prev => {
+            if (!prev) {
+              // Modal is being opened for first time, reset the downloaded state
+              setUpdateDownloaded(false);
+            }
+            return true;
+          });
         }
       };
       
