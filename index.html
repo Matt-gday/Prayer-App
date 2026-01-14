@@ -5341,6 +5341,20 @@
     if ('serviceWorker' in navigator) {
       let refreshing = false;
       
+      // Function to check for updates and show modal if needed
+      const checkForUpdates = (registration) => {
+        // Force check for updates
+        registration.update().then(() => {
+          // Check if there's a waiting worker
+          if (registration.waiting) {
+            console.log('[SW] Waiting worker found, showing update modal');
+            window.dispatchEvent(new CustomEvent('sw-waiting', { detail: registration.waiting }));
+          }
+        }).catch(err => {
+          console.error('[SW] Error checking for updates:', err);
+        });
+      };
+      
       // Register service worker
       navigator.serviceWorker.register('./service-worker.js')
         .then(registration => {
@@ -5348,10 +5362,17 @@
           
           // Check if there's already a waiting worker on page load
           if (registration.waiting) {
-            // Get the React component instance to call showUpdateModal
-            // We'll use a custom event to communicate with React
+            console.log('[SW] Waiting worker found on load');
             window.dispatchEvent(new CustomEvent('sw-waiting', { detail: registration.waiting }));
           }
+          
+          // Force an immediate update check on registration
+          checkForUpdates(registration);
+          
+          // Check for updates periodically (every 60 seconds)
+          setInterval(() => {
+            checkForUpdates(registration);
+          }, 60000);
           
           // Listen for updates
           registration.addEventListener('updatefound', () => {
@@ -5360,10 +5381,16 @@
             
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // There's a new service worker available
-                  console.log('[SW] New service worker installed and waiting');
-                  window.dispatchEvent(new CustomEvent('sw-waiting', { detail: registration.waiting || newWorker }));
+                console.log('[SW] New worker state:', newWorker.state);
+                if (newWorker.state === 'installed') {
+                  if (navigator.serviceWorker.controller) {
+                    // There's a new service worker available
+                    console.log('[SW] New service worker installed and waiting');
+                    window.dispatchEvent(new CustomEvent('sw-waiting', { detail: registration.waiting || newWorker }));
+                  } else {
+                    // First time installation
+                    console.log('[SW] Service worker installed for the first time');
+                  }
                 }
               });
             }

@@ -1,6 +1,7 @@
 // Service Worker for Prayer Companion PWA
 // Update CACHE_NAME when you make changes to the app to force cache refresh
-const CACHE_NAME = 'prayer-companion-v1';
+// Increment the version number (v1, v2, v3, etc.) each time you deploy updates
+const CACHE_NAME = 'prayer-companion-v2';
 const URLS_TO_CACHE = [
   './',
   './index.html'
