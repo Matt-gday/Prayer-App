@@ -4254,6 +4254,10 @@
       const renderEditPerson = () => {
         const isNew = !editingPerson?.id;
         const personCard = isNew ? null : cards.find(c => c.peopleIds.includes(editingPerson.id));
+        const hasName = personForm.firstName.trim() || personForm.lastName.trim();
+        const hasIdentifier = personForm.firstName.trim() || personForm.lastName.trim() || personForm.organisation.trim();
+        const typeToggleDisabled = !hasName;
+        const checkboxToggleDisabled = !hasIdentifier;
         const save = () => { 
           if (!personForm.firstName.trim() && !personForm.lastName.trim() && !personForm.organisation.trim()) { 
             alert('Enter a name or organisation'); 
@@ -4311,8 +4315,16 @@
                 </>
               )}
             </div>
-            <label style={styles.label}>Type</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(!personForm.isChild ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, isChild: false })}>Adult</div><div style={{ ...styles.toggleOption, ...(personForm.isChild ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, isChild: true })}>Child</div></div>
-            <label style={styles.label}>Individual checkbox</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(personForm.individualCheckbox ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, individualCheckbox: true })}>Yes</div><div style={{ ...styles.toggleOption, ...(!personForm.individualCheckbox ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setPersonForm({ ...personForm, individualCheckbox: false })}>No</div></div>
+            <label style={styles.label}>Type</label>
+            <div style={{ ...styles.toggle, opacity: typeToggleDisabled ? 0.5 : 1, pointerEvents: typeToggleDisabled ? 'none' : 'auto' }}>
+              <div style={{ ...styles.toggleOption, ...(!personForm.isChild ? styles.toggleActive : styles.toggleInactive) }} onClick={() => !typeToggleDisabled && setPersonForm({ ...personForm, isChild: false })}>Adult</div>
+              <div style={{ ...styles.toggleOption, ...(personForm.isChild ? styles.toggleActive : styles.toggleInactive) }} onClick={() => !typeToggleDisabled && setPersonForm({ ...personForm, isChild: true })}>Child</div>
+            </div>
+            <label style={styles.label}>Individual checkbox</label>
+            <div style={{ ...styles.toggle, opacity: checkboxToggleDisabled ? 0.5 : 1, pointerEvents: checkboxToggleDisabled ? 'none' : 'auto' }}>
+              <div style={{ ...styles.toggleOption, ...(personForm.individualCheckbox ? styles.toggleActive : styles.toggleInactive) }} onClick={() => !checkboxToggleDisabled && setPersonForm({ ...personForm, individualCheckbox: true })}>Yes</div>
+              <div style={{ ...styles.toggleOption, ...(!personForm.individualCheckbox ? styles.toggleActive : styles.toggleInactive) }} onClick={() => !checkboxToggleDisabled && setPersonForm({ ...personForm, individualCheckbox: false })}>No</div>
+            </div>
             {!isNew && (
               <>
                 <button style={{ ...styles.btnSecondary, width: '100%', marginTop: '8px' }} onClick={() => { setViewingStats(editingPerson); setEditingPerson(null); }}>View History</button>
