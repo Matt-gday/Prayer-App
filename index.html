@@ -782,6 +782,17 @@
         padding: 0 !important;
         margin-bottom: 0 !important;
       }
+      .home-start-btn {
+        width: 130px !important;
+        height: 130px !important;
+        font-size: 17px !important;
+        padding: 16px !important;
+      }
+      .home-action-btn {
+        width: 160px !important;
+        padding: 11px 16px !important;
+        font-size: 14px !important;
+      }
       .home-separator {
         display: block;
         width: 1px;
@@ -3870,7 +3881,7 @@
         const showList = session?.currentView === 'list' || allDone;
         
         if (showList) return (
-          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
             <div className="app-header">
               <button style={styles.btnText} onClick={() => setScreen('home')}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Home</button>
               {!allDone && <button style={styles.btnText} onClick={() => setSession(s => ({ ...s, currentView: 'flashcard' }))}>Cards</button>}
@@ -4112,7 +4123,7 @@
         );
         
         return (
-          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
             <div className="app-header">
               <button style={styles.btnText} onClick={() => { setSearchTerm(''); setScreen('home'); }}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button>
               <input 
@@ -4151,7 +4162,7 @@
             </div>
             
             {/* 2-column grid list */}
-            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 24px 6px', margin: '0 -6px', minHeight: 0 }}>
+            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 6px 24px 6px', margin: '0 -6px', minHeight: 0, WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
               {manageTab === 'people' ? renderPeopleList() : renderGroupsList()}
             </div>
           </div>
@@ -4419,7 +4430,7 @@
         const sel = people.filter(p => selectedPeopleForGroup.includes(p.id));
         const create = () => { if (!groupForm.name.trim()) { alert('Name required'); return; } createGroup({ ...groupForm, peopleIds: selectedPeopleForGroup, checkboxOverrides }); setSelectedPeopleForGroup([]); setScreen('home'); };
         if (groupStep === 1) return (
-          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
             <div className="app-header">
               <button style={styles.btnText} onClick={() => { setSelectedPeopleForGroup([]); setSearchTerm(''); setScreen('home'); }}>Cancel</button>
               <input 
@@ -5148,7 +5159,7 @@
         };
         
         return (
-          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
             <div className="app-header">
               <button style={styles.btnText} onClick={() => { setSearchTerm(''); setScreen('home'); }}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button>
               <input 
@@ -5186,7 +5197,7 @@
             </div>
             
             {/* 2-column grid list */}
-            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 6px 24px 6px', margin: '0 -6px', minHeight: 0 }}>
+            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 6px 24px 6px', margin: '0 -6px', minHeight: 0, WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
               {historyTab === 'people' ? renderHistoryPeopleList() : renderHistoryGroupsList()}
             </div>
           </div>
