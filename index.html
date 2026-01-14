@@ -1003,7 +1003,7 @@
   <div id="root"></div>
   
   <script type="text/babel">
-    const { useState, useEffect, useCallback } = React;
+    const { useState, useEffect, useCallback, useRef } = React;
 
     const generateId = () => Math.random().toString(36).substr(2, 9);
     const formatDate = (date) => {
@@ -1237,6 +1237,14 @@
       const [groupForm, setGroupForm] = useState({ name: '', frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: false });
       const [groupStep, setGroupStep] = useState(1);
       const [checkboxOverrides, setCheckboxOverrides] = useState({});
+      
+      // Refs for form field navigation
+      const firstNameRef = useRef(null);
+      const lastNameRef = useRef(null);
+      const organisationRef = useRef(null);
+      const prayerPointsRef = useRef(null);
+      const groupNameRef = useRef(null);
+      const groupPrayerPointsRef = useRef(null);
       const [modal, setModal] = useState(null);
       const [demoMode, setDemoMode] = useState(() => getStored('prayerApp_demoMode', false));
       const [helpOpen, setHelpOpen] = useState(false);
@@ -2583,6 +2591,21 @@
           setPersonForm({ firstName: '', lastName: '', organisation: '', prayerPoint: '', frequency: 'daily', isChild: false, individualCheckbox: true });
         }
       }, [editingPerson, cards]);
+      
+      // Auto-focus first name field when adding a new person
+      useEffect(() => {
+        if (editingPerson && !editingPerson.id && firstNameRef.current) {
+          setTimeout(() => firstNameRef.current?.focus(), 100);
+        }
+      }, [editingPerson]);
+      
+      // Auto-focus group name field when creating a group (step 2)
+      useEffect(() => {
+        if (screen === 'createGroup' && groupStep === 2 && groupNameRef.current) {
+          setTimeout(() => groupNameRef.current?.focus(), 100);
+        }
+      }, [screen, groupStep]);
+      
       useEffect(() => { if (editingCard) setCardForm({ name: editingCard.name || '', frequency: editingCard.frequency || 'daily', prayerPoint: editingCard.prayerPoint || '', includeUnnamedChildren: editingCard.includeUnnamedChildren || false }); }, [editingCard]);
       useEffect(() => { if (screen === 'createGroup') { setGroupStep(1); setGroupForm({ name: '', frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: false }); setCheckboxOverrides({}); } }, [screen]);
       useEffect(() => { if (selectedPeopleForGroup.length) { const sel = people.filter(p => selectedPeopleForGroup.includes(p.id)); const surnames = [...new Set(sel.map(p => p.lastName).filter(Boolean))]; setGroupForm(f => ({ ...f, name: surnames.length === 1 && surnames[0] ? surnames[0] + 's' : '' })); } }, [selectedPeopleForGroup, people]);
@@ -4347,10 +4370,41 @@
               </div>
             )}
             
-            <label style={styles.label}>First Name</label><input style={styles.input} value={personForm.firstName} onChange={e => setPersonForm({ ...personForm, firstName: e.target.value })} placeholder="First name" />
-            <label style={styles.label}>Last Name</label><input style={styles.input} value={personForm.lastName} onChange={e => setPersonForm({ ...personForm, lastName: e.target.value })} placeholder="Last name" />
-            <label style={styles.label}>Organisation / Ministry</label><input style={styles.input} value={personForm.organisation} onChange={e => setPersonForm({ ...personForm, organisation: e.target.value })} placeholder="Optional - e.g. OMF, City Youth" />
-            <label style={styles.label}>Prayer Points</label><textarea style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }} value={personForm.prayerPoint} onChange={e => setPersonForm({ ...personForm, prayerPoint: e.target.value })} placeholder="One per line" />
+            <label style={styles.label}>First Name</label>
+            <input 
+              ref={firstNameRef}
+              style={styles.input} 
+              value={personForm.firstName} 
+              onChange={e => setPersonForm({ ...personForm, firstName: e.target.value })} 
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); lastNameRef.current?.focus(); } }}
+              placeholder="First name" 
+            />
+            <label style={styles.label}>Last Name</label>
+            <input 
+              ref={lastNameRef}
+              style={styles.input} 
+              value={personForm.lastName} 
+              onChange={e => setPersonForm({ ...personForm, lastName: e.target.value })} 
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); organisationRef.current?.focus(); } }}
+              placeholder="Last name" 
+            />
+            <label style={styles.label}>Organisation / Ministry</label>
+            <input 
+              ref={organisationRef}
+              style={styles.input} 
+              value={personForm.organisation} 
+              onChange={e => setPersonForm({ ...personForm, organisation: e.target.value })} 
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); prayerPointsRef.current?.focus(); } }}
+              placeholder="Optional - e.g. OMF, City Youth" 
+            />
+            <label style={styles.label}>Prayer Points</label>
+            <textarea 
+              ref={prayerPointsRef}
+              style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }} 
+              value={personForm.prayerPoint} 
+              onChange={e => setPersonForm({ ...personForm, prayerPoint: e.target.value })} 
+              placeholder="One per line" 
+            />
             <label style={styles.label}>Frequency</label>
             <div style={styles.sortDropdown}>
               <button type="button" style={styles.sortTrigger} onClick={() => setFreqDropdownOpen(!freqDropdownOpen)}>
@@ -4739,7 +4793,15 @@
           <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden', overscrollBehavior: 'none' }}>
             <div className="app-header"><button style={styles.btnText} onClick={() => setGroupStep(1)}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button><button style={styles.btnText} onClick={create}>Create</button></div>
             <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingBottom: '20px', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
-              <label style={styles.label}>Group Name</label><input style={styles.input} value={groupForm.name} onChange={e => setGroupForm({ ...groupForm, name: e.target.value })} placeholder="e.g. Smiths" />
+              <label style={styles.label}>Group Name</label>
+              <input 
+                ref={groupNameRef}
+                style={styles.input} 
+                value={groupForm.name} 
+                onChange={e => setGroupForm({ ...groupForm, name: e.target.value })} 
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); groupPrayerPointsRef.current?.focus(); } }}
+                placeholder="e.g. Smiths" 
+              />
               <label style={styles.label}>Frequency</label>
               <div style={styles.sortDropdown}>
                 <button type="button" style={styles.sortTrigger} onClick={() => setFreqDropdownOpen(!freqDropdownOpen)}>
@@ -4760,7 +4822,14 @@
                   </>
                 )}
               </div>
-              <label style={styles.label}>Prayer Points</label><textarea style={{ ...styles.input, minHeight: '60px', resize: 'vertical' }} value={groupForm.prayerPoint} onChange={e => setGroupForm({ ...groupForm, prayerPoint: e.target.value })} placeholder="One per line" />
+              <label style={styles.label}>Prayer Points</label>
+              <textarea 
+                ref={groupPrayerPointsRef}
+                style={{ ...styles.input, minHeight: '60px', resize: 'vertical' }} 
+                value={groupForm.prayerPoint} 
+                onChange={e => setGroupForm({ ...groupForm, prayerPoint: e.target.value })} 
+                placeholder="One per line" 
+              />
               <label style={styles.label}>Unnamed children</label><div style={styles.toggle}><div style={{ ...styles.toggleOption, ...(groupForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setGroupForm({ ...groupForm, includeUnnamedChildren: true })}>Yes</div><div style={{ ...styles.toggleOption, ...(!groupForm.includeUnnamedChildren ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setGroupForm({ ...groupForm, includeUnnamedChildren: false })}>No</div></div>
               <label style={styles.label}>Checkboxes</label><div>{sel.map(p => { const isOrg = !p.firstName && !p.lastName && p.organisation; const displayName = isOrg ? p.organisation : `${p.firstName} ${p.lastName}`.trim(); return <div key={p.id} style={{ ...styles.listItem, flexDirection: 'column', alignItems: 'stretch' }}><div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ fontWeight: '500', fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</span><span style={{ fontSize: '12px', color: colors.textTertiary }}>{p.isChild ? 'Child' : 'Adult'}</span></div><div style={{ ...styles.toggle, marginBottom: 0 }}><div style={{ ...styles.toggleOption, fontSize: '13px', padding: '8px', ...((checkboxOverrides[p.id] ?? p.individualCheckbox) ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCheckboxOverrides({ ...checkboxOverrides, [p.id]: true })}>Individual</div><div style={{ ...styles.toggleOption, fontSize: '13px', padding: '8px', ...(!(checkboxOverrides[p.id] ?? p.individualCheckbox) ? styles.toggleActive : styles.toggleInactive) }} onClick={() => setCheckboxOverrides({ ...checkboxOverrides, [p.id]: false })}>Grouped</div></div></div>; })}</div>
             </div>
