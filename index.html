@@ -4189,9 +4189,9 @@
           onConfirm: () => { deletePerson(editingPerson.id); setEditingPerson(null); }
         });
         return (
-          <div className="app-container" style={styles.container}>
-            <div className="app-header"><button style={styles.btnText} onClick={() => setEditingPerson(null)}>Cancel</button><button style={styles.btnText} onClick={save}>Save</button></div>
-            
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
+            <div className="app-header" style={{ flexShrink: 0 }}><button style={styles.btnText} onClick={() => setEditingPerson(null)}>Cancel</button><button style={styles.btnText} onClick={save}>Save</button></div>
+            <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', paddingBottom: '20px' }}>
             {!isNew && personCard && (
               <div 
                 style={{ ...styles.card, padding: '14px 16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -4275,6 +4275,7 @@
                 </div>
               </>
             )}
+            </div>
           </div>
         );
       };
@@ -4283,8 +4284,9 @@
         const cp = editingCard?.peopleIds.map(id => people.find(p => p.id === id)).filter(Boolean) || [];
         const save = () => { if (!cardForm.name.trim()) { alert('Name required'); return; } updateCard(editingCard.id, cardForm); setEditingCard(null); };
         return (
-          <div className="app-container" style={styles.container}>
-            <div className="app-header"><button style={styles.btnText} onClick={() => setEditingCard(null)}>Cancel</button><button style={styles.btnText} onClick={save}>Save</button></div>
+          <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
+            <div className="app-header" style={{ flexShrink: 0 }}><button style={styles.btnText} onClick={() => setEditingCard(null)}>Cancel</button><button style={styles.btnText} onClick={save}>Save</button></div>
+            <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', paddingBottom: '20px' }}>
             <label style={styles.label}>Card Name</label><input style={styles.input} value={cardForm.name} onChange={e => setCardForm({ ...cardForm, name: e.target.value })} />
             <label style={styles.label}>Frequency</label>
             <div style={styles.sortDropdown}>
@@ -4422,6 +4424,7 @@
               danger: true,
               onConfirm: () => { deleteCard(editingCard.id); setEditingCard(null); }
             })}>Delete</button>}
+            </div>
           </div>
         );
       };
@@ -4478,7 +4481,7 @@
               if (searchTerm && !filtered.length) return <div style={styles.emptyState}>No results for "{searchTerm}"</div>;
               if (!filtered.length) return <div style={styles.emptyState}>No active people available.<br/>Unarchive people to add them to groups.</div>;
               return (
-              <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 6px', margin: '0 -6px', minHeight: 0 }}>
+              <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 6px', margin: '0 -6px', minHeight: 0, WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
                 {sortBy !== 'frequency' ? (
                   <div className="two-column-grid">
                     {filtered.map(p => { 
@@ -4533,7 +4536,7 @@
         return (
           <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden', overscrollBehavior: 'none' }}>
             <div className="app-header"><button style={styles.btnText} onClick={() => setGroupStep(1)}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button><button style={styles.btnText} onClick={create}>Create</button></div>
-            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '20px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingBottom: '20px', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
               <label style={styles.label}>Group Name</label><input style={styles.input} value={groupForm.name} onChange={e => setGroupForm({ ...groupForm, name: e.target.value })} placeholder="e.g. Smiths" />
               <label style={styles.label}>Frequency</label>
               <div style={styles.sortDropdown}>
@@ -4630,14 +4633,15 @@
           };
           
           return (
-            <div className="app-container" style={styles.container}>
-              <div className="app-header" style={{ position: 'relative' }}>
+            <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
+              <div className="app-header" style={{ position: 'relative', flexShrink: 0 }}>
                 <button style={styles.btnText} onClick={() => { setViewingStats(null); setSelectedHistoryDate(null); }}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Back</button>
                 <div className="landscape-only" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ fontSize: '18px', fontWeight: '700', fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</div>
                   <div style={{ color: colors.textSecondary, fontSize: '14px' }}>{prayed.length} times in {mName}</div>
                 </div>
               </div>
+              <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', paddingBottom: '20px' }}>
               <div className="portrait-only" style={{ fontSize: '22px', fontWeight: '700', marginBottom: '4px', fontStyle: isOrg ? 'italic' : 'normal' }}>{displayName}</div>
               <div className="portrait-only" style={{ color: colors.textSecondary, marginBottom: '24px', fontSize: '16px' }}>{prayed.length} times in {mName}</div>
               
@@ -4989,6 +4993,7 @@
                     </div>
                   )}
                 </div>
+              </div>
               </div>
             </div>
           );
