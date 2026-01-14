@@ -1779,30 +1779,34 @@
       };
       
       const downloadData = (fromUpdateModal = false) => {
-        // Always export real user data, not demo data
-        // If in demo mode, get the saved real data from localStorage
-        const exportPeople = demoMode ? getStored('prayerApp_realPeople', []) : people;
-        const exportCards = demoMode ? getStored('prayerApp_realCards', []) : cards;
+        try {
+          // Always export real user data, not demo data
+          // If in demo mode, get the saved real data from localStorage
+          const exportPeople = demoMode ? getStored('prayerApp_realPeople', []) : people;
+          const exportCards = demoMode ? getStored('prayerApp_realCards', []) : cards;
+          
+          const exportData = {
+            version: DATA_VERSION,
+            exportDate: new Date().toISOString(),
+            userName,
+            people: exportPeople,
+            cards: exportCards
+            // Note: demoMode is intentionally not exported - it's a viewing preference, not user data
+          };
+          const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `prayer-companion-backup-${new Date().toISOString().split('T')[0]}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          console.error('Download error:', err);
+        }
         
-        const exportData = {
-          version: DATA_VERSION,
-          exportDate: new Date().toISOString(),
-          userName,
-          people: exportPeople,
-          cards: exportCards
-          // Note: demoMode is intentionally not exported - it's a viewing preference, not user data
-        };
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `prayer-companion-backup-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        // If called from update modal, enable the update button
+        // If called from update modal, enable the update button regardless
         if (fromUpdateModal) {
           setUpdateDownloaded(true);
         } else {
@@ -2592,19 +2596,6 @@
         }
       }, [editingPerson, cards]);
       
-      // Auto-focus first name field when adding a new person
-      useEffect(() => {
-        if (editingPerson && !editingPerson.id && firstNameRef.current) {
-          setTimeout(() => firstNameRef.current?.focus(), 100);
-        }
-      }, [editingPerson]);
-      
-      // Auto-focus group name field when creating a group (step 2)
-      useEffect(() => {
-        if (screen === 'createGroup' && groupStep === 2 && groupNameRef.current) {
-          setTimeout(() => groupNameRef.current?.focus(), 100);
-        }
-      }, [screen, groupStep]);
       
       useEffect(() => { if (editingCard) setCardForm({ name: editingCard.name || '', frequency: editingCard.frequency || 'daily', prayerPoint: editingCard.prayerPoint || '', includeUnnamedChildren: editingCard.includeUnnamedChildren || false }); }, [editingCard]);
       useEffect(() => { if (screen === 'createGroup') { setGroupStep(1); setGroupForm({ name: '', frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: false }); setCheckboxOverrides({}); } }, [screen]);
@@ -4377,6 +4368,8 @@
               value={personForm.firstName} 
               onChange={e => setPersonForm({ ...personForm, firstName: e.target.value })} 
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); lastNameRef.current?.focus(); } }}
+              enterKeyHint="next"
+              autoCapitalize="words"
               placeholder="First name" 
             />
             <label style={styles.label}>Last Name</label>
@@ -4386,6 +4379,8 @@
               value={personForm.lastName} 
               onChange={e => setPersonForm({ ...personForm, lastName: e.target.value })} 
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); organisationRef.current?.focus(); } }}
+              enterKeyHint="next"
+              autoCapitalize="words"
               placeholder="Last name" 
             />
             <label style={styles.label}>Organisation / Ministry</label>
@@ -4395,6 +4390,8 @@
               value={personForm.organisation} 
               onChange={e => setPersonForm({ ...personForm, organisation: e.target.value })} 
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); prayerPointsRef.current?.focus(); } }}
+              enterKeyHint="next"
+              autoCapitalize="words"
               placeholder="Optional - e.g. OMF, City Youth" 
             />
             <label style={styles.label}>Prayer Points</label>
@@ -4800,6 +4797,8 @@
                 value={groupForm.name} 
                 onChange={e => setGroupForm({ ...groupForm, name: e.target.value })} 
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); groupPrayerPointsRef.current?.focus(); } }}
+                enterKeyHint="next"
+                autoCapitalize="words"
                 placeholder="e.g. Smiths" 
               />
               <label style={styles.label}>Frequency</label>
