@@ -1051,22 +1051,30 @@
     const generateDemoData = () => {
       const today = new Date();
       const demoPeople = [
+        // Mitchells family - 2 adults with prayer points, grouped children
         { id: 'p1', firstName: 'Hannah', lastName: 'Mitchell', organisation: '', prayerPoint: 'Healing from surgery\nPeace during recovery', isChild: false, individualCheckbox: true },
         { id: 'p2', firstName: 'Thomas', lastName: 'Mitchell', organisation: '', prayerPoint: 'Job interview this week\nWisdom in career decisions', isChild: false, individualCheckbox: true },
         { id: 'p3', firstName: 'Emma', lastName: 'Mitchell', organisation: '', prayerPoint: '', isChild: true, individualCheckbox: false },
         { id: 'p4', firstName: 'Liam', lastName: 'Mitchell', organisation: '', prayerPoint: '', isChild: true, individualCheckbox: false },
-        { id: 'p5', firstName: 'Victoria', lastName: 'Greene', organisation: '', prayerPoint: 'Confidence at school', isChild: false, individualCheckbox: true },
-        { id: 'p6', firstName: 'David', lastName: 'Chen', organisation: 'Christ Central Church', prayerPoint: 'Wisdom for church direction', isChild: false, individualCheckbox: true },
-        { id: 'p7', firstName: 'Nathan', lastName: 'Reynolds', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
-        { id: 'p8', firstName: 'Craig', lastName: 'Thompson', organisation: '', prayerPoint: 'Marriage restoration', isChild: false, individualCheckbox: true },
-        { id: 'p9', firstName: 'Ben', lastName: 'Parker', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
-        { id: 'p10', firstName: 'Grace', lastName: 'Warren', organisation: '', prayerPoint: 'Peace and direction', isChild: false, individualCheckbox: true },
-        { id: 'p11', firstName: 'Megan', lastName: 'Martin', organisation: '', prayerPoint: 'Music ministry growth', isChild: false, individualCheckbox: true },
-        { id: 'p12', firstName: 'Michael', lastName: 'Torres', organisation: '', prayerPoint: 'Financial breakthrough', isChild: false, individualCheckbox: true },
-        { id: 'p13', firstName: 'Claire', lastName: 'Torres', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
-        { id: 'p14', firstName: 'Sophie', lastName: 'Torres', organisation: '', prayerPoint: '', isChild: true, individualCheckbox: false },
-        { id: 'p15', firstName: 'Mark', lastName: 'Stevens', organisation: 'OMF Thailand', prayerPoint: 'Protection and provision', isChild: false, individualCheckbox: true },
-        { id: 'p16', firstName: '', lastName: '', organisation: 'City Youth Outreach', prayerPoint: 'Volunteer recruitment', isChild: false, individualCheckbox: true },
+        // David Chen - person with name, organisation, and multiple prayer points
+        { id: 'p5', firstName: 'David', lastName: 'Chen', organisation: 'Christ Central Church', prayerPoint: 'Wisdom for church direction\nNew building project\nStaff team unity', isChild: false, individualCheckbox: true },
+        // City Youth Outreach - organisation only (no name) with multiple prayer points
+        { id: 'p6', firstName: '', lastName: '', organisation: 'City Youth Outreach', prayerPoint: 'Volunteer recruitment\nYouth camp planning\nFunding for new programs', isChild: false, individualCheckbox: true },
+        // Sarah - just a first name, no other details
+        { id: 'p7', firstName: 'Sarah', lastName: '', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
+        // Lisa - single mother with unnamed children
+        { id: 'p8', firstName: 'Lisa', lastName: 'Thompson', organisation: '', prayerPoint: 'Strength as a single mum\nFinancial provision', isChild: false, individualCheckbox: true },
+        // Other people for variety
+        { id: 'p9', firstName: 'Grace', lastName: 'Warren', organisation: '', prayerPoint: 'Peace and direction', isChild: false, individualCheckbox: true },
+        { id: 'p10', firstName: 'Nathan', lastName: 'Reynolds', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
+        { id: 'p11', firstName: 'Craig', lastName: 'Thompson', organisation: '', prayerPoint: 'Marriage restoration', isChild: false, individualCheckbox: true },
+        { id: 'p12', firstName: 'Ben', lastName: 'Parker', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
+        { id: 'p13', firstName: 'Victoria', lastName: 'Greene', organisation: '', prayerPoint: 'Confidence at school', isChild: false, individualCheckbox: true },
+        { id: 'p14', firstName: 'Mark', lastName: 'Stevens', organisation: 'OMF Thailand', prayerPoint: 'Protection and provision\nTeam health\nLocal partnerships', isChild: false, individualCheckbox: true },
+        // Torres Family
+        { id: 'p15', firstName: 'Michael', lastName: 'Torres', organisation: '', prayerPoint: 'Financial breakthrough', isChild: false, individualCheckbox: true },
+        { id: 'p16', firstName: 'Claire', lastName: 'Torres', organisation: '', prayerPoint: '', isChild: false, individualCheckbox: true },
+        { id: 'p17', firstName: 'Sophie', lastName: 'Torres', organisation: '', prayerPoint: '', isChild: true, individualCheckbox: false },
       ];
 
       const generateHistoryForFrequency = (frequency, personId, prayerPoint) => {
@@ -1077,26 +1085,27 @@
         const historicalPoints = {
           p1: ['Healing from surgery\nPeace during recovery', 'Pre-surgery preparations\nStrength and courage', 'Recovery going well\nPhysical therapy progress'],
           p2: ['Job interview this week\nWisdom in career decisions', 'Waiting on job offer\nPatience and trust', 'Starting new role\nSmooth transition'],
-          p5: ['Confidence at school', 'Upcoming exams\nFocus and clarity', 'Friendships at school'],
-          p6: ['Wisdom for church direction', 'Building leadership team', 'Vision for 2026'],
-          p8: ['Marriage restoration', 'Communication with spouse\nHealing past hurts', 'Counselling sessions'],
-          p10: ['Peace and direction', 'New opportunities arising\nDiscernment needed', 'Grateful for clarity'],
-          p11: ['Music ministry growth', 'New worship songs\nTeam development', 'Leading Sunday worship'],
-          p12: ['Financial breakthrough', 'Business decisions\nProvision for family', 'Debt reduction progress'],
-          p15: ['Protection and provision', 'Team health in Thailand\nLocal partnerships', 'Visa renewal process'],
-          p16: ['Volunteer recruitment', 'Youth camp planning\nFunding needs', 'New youth leaders']
+          p5: ['Wisdom for church direction\nNew building project\nStaff team unity', 'Building leadership team', 'Vision for 2026'],
+          p6: ['Volunteer recruitment\nYouth camp planning\nFunding for new programs', 'Youth camp planning\nFunding needs', 'New youth leaders'],
+          p8: ['Strength as a single mum\nFinancial provision', 'Kids settling into school\nWork-life balance', 'Support network growing'],
+          p9: ['Peace and direction', 'New opportunities arising\nDiscernment needed', 'Grateful for clarity'],
+          p11: ['Marriage restoration', 'Communication with spouse\nHealing past hurts', 'Counselling sessions'],
+          p13: ['Confidence at school', 'Upcoming exams\nFocus and clarity', 'Friendships at school'],
+          p14: ['Protection and provision\nTeam health\nLocal partnerships', 'Team health in Thailand\nLocal partnerships', 'Visa renewal process'],
+          p15: ['Financial breakthrough', 'Business decisions\nProvision for family', 'Debt reduction progress']
         };
         
         const cardPoints = {
-          c1: ['Family unity and health', 'Holiday time together\nSafe travels', 'School year starting well'],
-          c4: ['Gaming group connections\nOpportunities to share faith', 'Tuesday meetups\nDeeper friendships', ''],
-          c7: ['Torres family provision\nKids schooling', 'Family health', '']
+          c1: ['Family unity and health\nKids schooling', 'Holiday time together\nSafe travels', 'School year starting well'],
+          c5: ['Translation projects\nTeam health and unity', 'New language partnerships\nFunding needs', 'Staff transitions\nOngoing projects'],
+          c9: ['Torres family provision\nKids schooling', 'Family health', '']
         };
         
         let startDay;
         if (frequency === 'daily') startDay = 1;
         else if (frequency === 'every-2-3-days') startDay = 3;
         else if (frequency === 'weekly') startDay = 7;
+        else if (frequency === 'fortnightly') startDay = 14;
         else startDay = 30;
         
         for (let i = startDay; i < 8 * 7; i++) {
@@ -1107,6 +1116,7 @@
           if (frequency === 'daily') shouldAdd = Math.random() > 0.15;
           else if (frequency === 'every-2-3-days') shouldAdd = i % 2 === 0 && Math.random() > 0.2;
           else if (frequency === 'weekly') shouldAdd = i % 7 === 0 && Math.random() > 0.1;
+          else if (frequency === 'fortnightly') shouldAdd = i % 14 === 0 && Math.random() > 0.1;
           else if (frequency === 'monthly') shouldAdd = i % 28 === 0;
           
           if (shouldAdd) {
@@ -1121,12 +1131,12 @@
               const cPoints = cardPoints['c1'] || [''];
               cardPrayerPoint = cPoints[pointIndex % cPoints.length] || '';
               cardName = 'Mitchells';
-            } else if (['p7', 'p8', 'p9'].includes(personId)) {
-              const cPoints = cardPoints['c4'] || [''];
+            } else if (['p10', 'p11', 'p12'].includes(personId)) {
+              const cPoints = cardPoints['c5'] || [''];
               cardPrayerPoint = cPoints[pointIndex % cPoints.length] || '';
-              cardName = 'Tuesday Gaming';
-            } else if (['p12', 'p13', 'p14'].includes(personId)) {
-              const cPoints = cardPoints['c7'] || [''];
+              cardName = 'Wycliffe Bible Translators';
+            } else if (['p15', 'p16', 'p17'].includes(personId)) {
+              const cPoints = cardPoints['c9'] || [''];
               cardPrayerPoint = cPoints[pointIndex % cPoints.length] || '';
               cardName = 'Torres Family';
             }
@@ -1143,13 +1153,23 @@
       };
 
       const frequencies = { 
-        p1: 'every-2-3-days', p2: 'every-2-3-days', p3: 'every-2-3-days', p4: 'every-2-3-days', 
-        p5: 'daily', p6: 'weekly', 
-        p7: 'every-2-3-days', p8: 'every-2-3-days', p9: 'every-2-3-days', 
-        p10: 'daily', p11: 'daily', 
-        p12: 'weekly', p13: 'weekly', p14: 'weekly', 
-        p15: 'monthly',
-        p16: 'weekly'
+        // Mitchells family (daily - shows on first day)
+        p1: 'daily', p2: 'daily', p3: 'daily', p4: 'daily', 
+        // David Chen with org (daily - shows on first day)
+        p5: 'daily',
+        // City Youth Outreach org only (daily - shows on first day)
+        p6: 'daily',
+        // Sarah first name only (daily - shows on first day)
+        p7: 'daily',
+        // Lisa + children (daily - shows on first day)
+        p8: 'daily',
+        // Other people with varied frequencies
+        p9: 'every-2-3-days',
+        p10: 'every-2-3-days', p11: 'every-2-3-days', p12: 'every-2-3-days',
+        p13: 'weekly',
+        p14: 'fortnightly',
+        // Torres family (weekly)
+        p15: 'weekly', p16: 'weekly', p17: 'weekly'
       };
 
       const peopleWithHistory = demoPeople.map(p => ({
@@ -1160,15 +1180,22 @@
       }));
 
       const demoCards = [
-        { id: 'c1', name: 'Mitchells', peopleIds: ['p1', 'p2', 'p3', 'p4'], frequency: 'daily', prayerPoint: 'Family unity and health', includeUnnamedChildren: false, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
-        { id: 'c2', name: 'Victoria Greene', peopleIds: ['p5'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
-        { id: 'c3', name: 'David Chen', peopleIds: ['p6'], frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
-        { id: 'c4', name: 'Tuesday Gaming', peopleIds: ['p7', 'p8', 'p9'], frequency: 'every-2-3-days', prayerPoint: '', includeUnnamedChildren: false, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
-        { id: 'c5', name: 'Grace Warren', peopleIds: ['p10'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
-        { id: 'c6', name: 'Jessica Martin', peopleIds: ['p11'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
-        { id: 'c7', name: 'Torres Family', peopleIds: ['p12', 'p13', 'p14'], frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: true, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
-        { id: 'c8', name: 'Mark Stevens', peopleIds: ['p15'], frequency: 'monthly', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
-        { id: 'c9', name: 'City Youth Outreach', peopleIds: ['p16'], frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        // TEST CASE 1: Family with 2 adults (with prayer points), grouped children, and group prayer points
+        { id: 'c1', name: 'Mitchells', peopleIds: ['p1', 'p2', 'p3', 'p4'], frequency: 'daily', prayerPoint: 'Family unity and health\nKids schooling', includeUnnamedChildren: false, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        // TEST CASE 2: Single person with name, organisation, and multiple prayer points
+        { id: 'c2', name: 'David Chen', peopleIds: ['p5'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        // TEST CASE 3: Organisation only (no first/last name) with multiple prayer points
+        { id: 'c3', name: 'City Youth Outreach', peopleIds: ['p6'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        // TEST CASE 4: Just a first name, no other details
+        { id: 'c4', name: 'Sarah', peopleIds: ['p7'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        // TEST CASE 5: Single mother with "and children" (unnamed children)
+        { id: 'c8', name: 'Lisa Thompson', peopleIds: ['p8'], frequency: 'daily', prayerPoint: '', includeUnnamedChildren: true, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        // Other cards with varied frequencies
+        { id: 'c5', name: 'Wycliffe Bible Translators', peopleIds: ['p10', 'p11', 'p12'], frequency: 'every-2-3-days', prayerPoint: 'Translation projects\nTeam health and unity', includeUnnamedChildren: false, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        { id: 'c6', name: 'Grace Warren', peopleIds: ['p9'], frequency: 'every-2-3-days', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        { id: 'c7', name: 'Victoria Greene', peopleIds: ['p13'], frequency: 'weekly', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        { id: 'c9', name: 'Torres Family', peopleIds: ['p15', 'p16', 'p17'], frequency: 'weekly', prayerPoint: 'Torres family provision\nKids schooling', includeUnnamedChildren: true, isGroup: true, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
+        { id: 'c10', name: 'Mark Stevens', peopleIds: ['p14'], frequency: 'fortnightly', prayerPoint: '', includeUnnamedChildren: false, isGroup: false, active: true, dateCreated: '2024-10-01', firstPrayerCompleted: true },
       ];
 
       return { people: peopleWithHistory, cards: demoCards };
@@ -2087,6 +2114,14 @@
           return dayOfWeek === slot || days >= 9;
         }
         
+        if (card.frequency === 'fortnightly') {
+          // Each card assigned to a specific day in a 14-day cycle
+          const slot = getSlotFromId(card.id, 14);
+          const dayInCycle = dayOfMonth % 14;
+          // Due on their assigned day, or overdue (16+ days as safety net)
+          return dayInCycle === slot || days >= 16;
+        }
+        
         if (card.frequency === 'monthly') {
           // Each card assigned to a specific day of month (1-28)
           const slot = getSlotFromId(card.id, 28) + 1; // 1-28
@@ -2108,6 +2143,7 @@
         if (card.frequency === 'daily') return days >= 1;
         if (card.frequency === 'every-2-3-days') return days >= 4;
         if (card.frequency === 'weekly') return days >= 9;
+        if (card.frequency === 'fortnightly') return days >= 16;
         if (card.frequency === 'monthly') {
           // Priority if we're past day 28 and haven't prayed this month
           const today = new Date();
@@ -2446,7 +2482,7 @@
         setCards(prev => prev.filter(c => c.id !== cid));
       };
 
-      const frequencyOrder = ['daily', 'every-2-3-days', 'weekly', 'monthly'];
+      const frequencyOrder = ['daily', 'every-2-3-days', 'weekly', 'fortnightly', 'monthly'];
       const getPersonFrequency = (p) => { const c = cards.find(x => x.peopleIds.includes(p.id)); return c?.frequency || 'daily'; };
       
       // Get dynamic display name for a card - for non-group cards, derive from person data
@@ -3414,12 +3450,12 @@
                 <p>Choose how often someone appears in your prayers:</p>
                 <ul>
                   <li><strong>Daily:</strong> Every day</li>
-                  <li><strong>Semi-daily:</strong> Every other day</li>
                   <li><strong>Every 2-3 days:</strong> Spreads out evenly across the week</li>
                   <li><strong>Weekly:</strong> Once a week, distributed evenly</li>
+                  <li><strong>Fortnightly:</strong> Once every two weeks</li>
                   <li><strong>Monthly:</strong> Once a month, spread across the month</li>
                 </ul>
-                <p>Weekly and monthly people are automatically distributed so you don't have everyone on the same day.</p>
+                <p>Weekly, fortnightly, and monthly people are automatically distributed so you don't have everyone on the same day.</p>
               </>
             )
           },
@@ -4318,14 +4354,14 @@
             <label style={styles.label}>Frequency</label>
             <div style={styles.sortDropdown}>
               <button type="button" style={styles.sortTrigger} onClick={() => setFreqDropdownOpen(!freqDropdownOpen)}>
-                {{ daily: 'Daily', 'every-2-3-days': 'Every 2-3 Days', weekly: 'Weekly', monthly: 'Monthly' }[personForm.frequency]}
+                {{ daily: 'Daily', 'every-2-3-days': 'Every 2-3 Days', weekly: 'Weekly', fortnightly: 'Fortnightly', monthly: 'Monthly' }[personForm.frequency]}
                 <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>▼</span>
               </button>
               {freqDropdownOpen && (
                 <>
                   <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setFreqDropdownOpen(false)} />
                   <div style={styles.sortMenu}>
-                    {[{ value: 'daily', label: 'Daily' }, { value: 'every-2-3-days', label: 'Every 2-3 Days' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }].map(opt => (
+                    {[{ value: 'daily', label: 'Daily' }, { value: 'every-2-3-days', label: 'Every 2-3 Days' }, { value: 'weekly', label: 'Weekly' }, { value: 'fortnightly', label: 'Fortnightly' }, { value: 'monthly', label: 'Monthly' }].map(opt => (
                       <div key={opt.value} style={{ ...styles.sortOption, ...(personForm.frequency === opt.value ? styles.sortOptionActive : {}) }} onClick={() => { setPersonForm({ ...personForm, frequency: opt.value }); setFreqDropdownOpen(false); }}>
                         <span style={{ width: '16px' }}>{personForm.frequency === opt.value ? '●' : ''}</span>
                         {opt.label}
@@ -4457,14 +4493,14 @@
             <label style={styles.label}>Frequency</label>
             <div style={styles.sortDropdown}>
               <button type="button" style={styles.sortTrigger} onClick={() => setFreqDropdownOpen(!freqDropdownOpen)}>
-                {{ daily: 'Daily', 'every-2-3-days': 'Every 2-3 Days', weekly: 'Weekly', monthly: 'Monthly' }[cardForm.frequency]}
+                {{ daily: 'Daily', 'every-2-3-days': 'Every 2-3 Days', weekly: 'Weekly', fortnightly: 'Fortnightly', monthly: 'Monthly' }[cardForm.frequency]}
                 <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>▼</span>
               </button>
               {freqDropdownOpen && (
                 <>
                   <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setFreqDropdownOpen(false)} />
                   <div style={styles.sortMenu}>
-                    {[{ value: 'daily', label: 'Daily' }, { value: 'every-2-3-days', label: 'Every 2-3 Days' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }].map(opt => (
+                    {[{ value: 'daily', label: 'Daily' }, { value: 'every-2-3-days', label: 'Every 2-3 Days' }, { value: 'weekly', label: 'Weekly' }, { value: 'fortnightly', label: 'Fortnightly' }, { value: 'monthly', label: 'Monthly' }].map(opt => (
                       <div key={opt.value} style={{ ...styles.sortOption, ...(cardForm.frequency === opt.value ? styles.sortOptionActive : {}) }} onClick={() => { setCardForm({ ...cardForm, frequency: opt.value }); setFreqDropdownOpen(false); }}>
                         <span style={{ width: '16px' }}>{cardForm.frequency === opt.value ? '●' : ''}</span>
                         {opt.label}
@@ -4707,14 +4743,14 @@
               <label style={styles.label}>Frequency</label>
               <div style={styles.sortDropdown}>
                 <button type="button" style={styles.sortTrigger} onClick={() => setFreqDropdownOpen(!freqDropdownOpen)}>
-                  {{ daily: 'Daily', 'every-2-3-days': 'Every 2-3 Days', weekly: 'Weekly', monthly: 'Monthly' }[groupForm.frequency]}
+                  {{ daily: 'Daily', 'every-2-3-days': 'Every 2-3 Days', weekly: 'Weekly', fortnightly: 'Fortnightly', monthly: 'Monthly' }[groupForm.frequency]}
                   <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>▼</span>
                 </button>
                 {freqDropdownOpen && (
                   <>
                     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setFreqDropdownOpen(false)} />
                     <div style={styles.sortMenu}>
-                      {[{ value: 'daily', label: 'Daily' }, { value: 'every-2-3-days', label: 'Every 2-3 Days' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }].map(opt => (
+                      {[{ value: 'daily', label: 'Daily' }, { value: 'every-2-3-days', label: 'Every 2-3 Days' }, { value: 'weekly', label: 'Weekly' }, { value: 'fortnightly', label: 'Fortnightly' }, { value: 'monthly', label: 'Monthly' }].map(opt => (
                         <div key={opt.value} style={{ ...styles.sortOption, ...(groupForm.frequency === opt.value ? styles.sortOptionActive : {}) }} onClick={() => { setGroupForm({ ...groupForm, frequency: opt.value }); setFreqDropdownOpen(false); }}>
                           <span style={{ width: '16px' }}>{groupForm.frequency === opt.value ? '●' : ''}</span>
                           {opt.label}
@@ -5412,10 +5448,12 @@
     // ============================================
     if ('serviceWorker' in navigator) {
       let refreshing = false;
+      let swRegistration = null;
       
       // Function to check for updates and show modal if needed
       const checkForUpdates = (registration) => {
-        // Force check for updates
+        if (!registration) return;
+        // Force check for updates - bypass cache
         registration.update().then(() => {
           // Check if there's a waiting worker
           if (registration.waiting) {
@@ -5427,9 +5465,10 @@
         });
       };
       
-      // Register service worker
-      navigator.serviceWorker.register('./service-worker.js')
+      // Register service worker with cache-busting for iOS
+      navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' })
         .then(registration => {
+          swRegistration = registration;
           console.log('[SW] Service Worker registered:', registration);
           
           // Check if there's already a waiting worker on page load
@@ -5441,10 +5480,10 @@
           // Force an immediate update check on registration
           checkForUpdates(registration);
           
-          // Check for updates periodically (every 60 seconds)
+          // Check for updates periodically (every 30 seconds for faster detection)
           setInterval(() => {
             checkForUpdates(registration);
-          }, 60000);
+          }, 30000);
           
           // Listen for updates
           registration.addEventListener('updatefound', () => {
@@ -5478,6 +5517,22 @@
           console.log('[SW] New service worker activated, reloading page...');
           refreshing = true;
           window.location.reload();
+        }
+      });
+      
+      // Check for updates when app comes to foreground (important for iOS PWAs)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && swRegistration) {
+          console.log('[SW] App became visible, checking for updates...');
+          checkForUpdates(swRegistration);
+        }
+      });
+      
+      // Also check on focus (backup for visibility change)
+      window.addEventListener('focus', () => {
+        if (swRegistration) {
+          console.log('[SW] Window focused, checking for updates...');
+          checkForUpdates(swRegistration);
         }
       });
     }
