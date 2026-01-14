@@ -1833,8 +1833,23 @@
       
       // Handle update button click - activate the new service worker
       const handleUpdateApp = () => {
-        if (waitingWorker) {
-          // Send message to service worker to skip waiting
+        if (!isMobile) {
+          // Desktop: Hard reload with cache clear
+          setUpdateModalOpen(false);
+          setWaitingWorker(null);
+          setUpdateDownloaded(false);
+          // Clear caches and reload
+          if ('caches' in window) {
+            caches.keys().then(names => {
+              Promise.all(names.map(name => caches.delete(name))).then(() => {
+                window.location.reload(true);
+              });
+            });
+          } else {
+            window.location.reload(true);
+          }
+        } else if (waitingWorker) {
+          // Mobile: Send message to service worker to skip waiting
           waitingWorker.postMessage({ type: 'SKIP_WAITING' });
           setUpdateModalOpen(false);
           setWaitingWorker(null);
@@ -3987,7 +4002,9 @@
                  <div className="data-modal" onClick={(e) => e.stopPropagation()}>
                    <h3>Update Available</h3>
                    <div className="data-modal-desc">
-                     A new version of Prayer Companion is available. Please download your data backup before updating to ensure your prayer list is safe.
+                     A new version of Prayer Companion is available. {isMobile 
+                       ? 'Please download your data backup before updating to ensure your prayer list is safe.'
+                       : 'It is highly recommended to download a backup before updating.'}
                    </div>
                    <div style={{ 
                      fontSize: '12px', 
@@ -3998,28 +4015,30 @@
                      marginBottom: '12px',
                      textAlign: 'center'
                    }}>
-                     ⚠️ <strong>Important:</strong> Download your backup first, then click Update App.
+                     {isMobile 
+                       ? '⚠️ Important: Download your backup first, then click Update App.'
+                       : '💡 Recommended: Download a backup before updating.'}
                    </div>
-<button 
-                    className="data-modal-btn data-modal-btn-download" 
-                    onClick={() => { setUpdateDownloaded(true); downloadData(true); }}
-                    style={{ opacity: updateDownloaded ? 0.6 : 1 }}
-                  >
-                    <span>↓</span> Download Backup
-                    {updateDownloaded && <span style={{ marginLeft: '8px', fontSize: '12px' }}>✓</span>}
-                  </button>
-                  <button 
-                    className="data-modal-btn data-modal-btn-download" 
-                    onClick={handleUpdateApp}
-                    disabled={!updateDownloaded}
-                    style={{ 
-                      opacity: updateDownloaded ? 1 : 0.5,
-                      cursor: updateDownloaded ? 'pointer' : 'not-allowed',
-                      background: updateDownloaded ? colors.primaryGradient : '#ccc'
-                    }}
-                  >
-                    <span>↑</span> Update App
-                  </button>
+                   <button 
+                     className="data-modal-btn data-modal-btn-download" 
+                     onClick={() => { setUpdateDownloaded(true); downloadData(true); }}
+                     style={{ opacity: updateDownloaded ? 0.6 : 1 }}
+                   >
+                     <span>↓</span> Download Backup
+                     {updateDownloaded && <span style={{ marginLeft: '8px', fontSize: '12px' }}>✓</span>}
+                   </button>
+                   <button 
+                     className="data-modal-btn data-modal-btn-download" 
+                     onClick={handleUpdateApp}
+                     disabled={isMobile && !updateDownloaded}
+                     style={{ 
+                       opacity: (!isMobile || updateDownloaded) ? 1 : 0.5,
+                       cursor: (!isMobile || updateDownloaded) ? 'pointer' : 'not-allowed',
+                       background: (!isMobile || updateDownloaded) ? colors.primaryGradient : '#ccc'
+                     }}
+                   >
+                     <span>↑</span> Update App
+                   </button>
                    <button 
                      className="data-modal-btn data-modal-btn-cancel" 
                      onClick={() => { setUpdateModalOpen(false); setWaitingWorker(null); setUpdateDownloaded(false); }}
