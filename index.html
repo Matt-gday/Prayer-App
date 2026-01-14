@@ -3993,26 +3993,26 @@
                    }}>
                      ⚠️ <strong>Important:</strong> Download your backup first, then click Update App.
                    </div>
-                   <button 
-                     className="data-modal-btn data-modal-btn-download" 
-                     onClick={() => downloadData(true)}
-                     style={{ opacity: updateDownloaded ? 0.6 : 1 }}
-                   >
-                     <span>↓</span> Download Backup
-                     {updateDownloaded && <span style={{ marginLeft: '8px', fontSize: '12px' }}>✓</span>}
-                   </button>
-                   <button 
-                     className="data-modal-btn data-modal-btn-download" 
-                     onClick={handleUpdateApp}
-                     disabled={!updateDownloaded}
-                     style={{ 
-                       opacity: updateDownloaded ? 1 : 0.5,
-                       cursor: updateDownloaded ? 'pointer' : 'not-allowed',
-                       background: updateDownloaded ? colors.primaryGradient : '#ccc'
-                     }}
-                   >
-                     <span>↑</span> Update App
-                   </button>
+<button 
+                    className="data-modal-btn data-modal-btn-download" 
+                    onClick={() => { setUpdateDownloaded(true); downloadData(true); }}
+                    style={{ opacity: updateDownloaded ? 0.6 : 1 }}
+                  >
+                    <span>↓</span> Download Backup
+                    {updateDownloaded && <span style={{ marginLeft: '8px', fontSize: '12px' }}>✓</span>}
+                  </button>
+                  <button 
+                    className="data-modal-btn data-modal-btn-download" 
+                    onClick={handleUpdateApp}
+                    disabled={!updateDownloaded}
+                    style={{ 
+                      opacity: updateDownloaded ? 1 : 0.5,
+                      cursor: updateDownloaded ? 'pointer' : 'not-allowed',
+                      background: updateDownloaded ? colors.primaryGradient : '#ccc'
+                    }}
+                  >
+                    <span>↑</span> Update App
+                  </button>
                    <button 
                      className="data-modal-btn data-modal-btn-cancel" 
                      onClick={() => { setUpdateModalOpen(false); setWaitingWorker(null); setUpdateDownloaded(false); }}
