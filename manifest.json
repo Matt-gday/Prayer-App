@@ -1,0 +1,12 @@
+{
+  "name": "Prayer Companion",
+  "short_name": "Prayer",
+  "description": "A simple way to remember and organize your daily prayers",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#EDE4D8",
+  "theme_color": "#EDE4D8",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "icons": []
+}

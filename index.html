@@ -12,6 +12,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#EDE4D8">
   
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
   <!-- Favicon - Prayer hands icon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23B87A4A;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23A66830;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='url(%23bg)'/%3E%3Cpath d='M 35 35 Q 45 25 50 30 Q 55 25 65 35 Q 50 40 35 35' fill='%23FFFFFF' opacity='0.95'/%3E%3Cpath d='M 38 42 Q 45 35 50 38 Q 55 35 62 42 Q 50 45 38 42' fill='%23FFFFFF' opacity='0.9'/%3E%3Cpath d='M 40 50 Q 45 45 50 47 Q 55 45 60 50 Q 50 52 40 50' fill='%23FFFFFF' opacity='0.85'/%3E%3Cpath d='M 42 58 Q 46 54 50 56 Q 54 54 58 58 Q 50 60 42 58' fill='%23FFFFFF' opacity='0.8'/%3E%3Cpath d='M 44 66 Q 47 63 50 65 Q 53 63 56 66' stroke='%23FFFFFF' stroke-width='2.5' fill='none' opacity='0.75'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23B87A4A;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23A66830;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='url(%23bg)'/%3E%3Cpath d='M 35 35 Q 45 25 50 30 Q 55 25 65 35 Q 50 40 35 35' fill='%23FFFFFF' opacity='0.95'/%3E%3Cpath d='M 38 42 Q 45 35 50 38 Q 55 35 62 42 Q 50 45 38 42' fill='%23FFFFFF' opacity='0.9'/%3E%3Cpath d='M 40 50 Q 45 45 50 47 Q 55 45 60 50 Q 50 52 40 50' fill='%23FFFFFF' opacity='0.85'/%3E%3Cpath d='M 42 58 Q 46 54 50 56 Q 54 54 58 58 Q 50 60 42 58' fill='%23FFFFFF' opacity='0.8'/%3E%3Cpath d='M 44 66 Q 47 63 50 65 Q 53 63 56 66' stroke='%23FFFFFF' stroke-width='2.5' fill='none' opacity='0.75'/%3E%3C/svg%3E">
@@ -1224,6 +1227,11 @@
       const [dataModalStep, setDataModalStep] = useState('main'); // 'main', 'confirmUpload'
       const [pendingUploadData, setPendingUploadData] = useState(null);
       
+      // PWA Update Modal State
+      const [updateModalOpen, setUpdateModalOpen] = useState(false);
+      const [waitingWorker, setWaitingWorker] = useState(null);
+      const [updateDownloaded, setUpdateDownloaded] = useState(false);
+      
       // PWA Install prompt state
       const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
       const [isStandalone, setIsStandalone] = useState(false);
@@ -1735,7 +1743,7 @@
         }
       };
       
-      const downloadData = () => {
+      const downloadData = (fromUpdateModal = false) => {
         // Always export real user data, not demo data
         // If in demo mode, get the saved real data from localStorage
         const exportPeople = demoMode ? getStored('prayerApp_realPeople', []) : people;
@@ -1758,9 +1766,51 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        setDataModalOpen(false);
-        setDataModalStep('main');
+        
+        // If called from update modal, enable the update button
+        if (fromUpdateModal) {
+          setUpdateDownloaded(true);
+        } else {
+          setDataModalOpen(false);
+          setDataModalStep('main');
+        }
       };
+      
+      // Show update modal when a new service worker is waiting
+      const showUpdateModal = (worker) => {
+        if (worker) {
+          setWaitingWorker(worker);
+          setUpdateModalOpen(true);
+          setUpdateDownloaded(false);
+        }
+      };
+      
+      // Handle update button click - activate the new service worker
+      const handleUpdateApp = () => {
+        if (waitingWorker) {
+          // Send message to service worker to skip waiting
+          waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+          setUpdateModalOpen(false);
+          setWaitingWorker(null);
+          setUpdateDownloaded(false);
+          // The controllerchange event will reload the page
+        }
+      };
+      
+      // Listen for service worker update notifications
+      useEffect(() => {
+        const handleSWWaiting = (event) => {
+          if (event.detail) {
+            showUpdateModal(event.detail);
+          }
+        };
+        
+        window.addEventListener('sw-waiting', handleSWWaiting);
+        
+        return () => {
+          window.removeEventListener('sw-waiting', handleSWWaiting);
+        };
+      }, []); // Empty deps - showUpdateModal uses stable state setters
       
       const handleFileUpload = (event) => {
         const file = event.target.files[0];
@@ -3870,6 +3920,55 @@
                  </div>
                </div>
              )}
+             
+             {/* PWA Update Modal */}
+             {updateModalOpen && (
+               <div className="data-modal-overlay" onClick={() => { setUpdateModalOpen(false); setWaitingWorker(null); setUpdateDownloaded(false); }}>
+                 <div className="data-modal" onClick={(e) => e.stopPropagation()}>
+                   <h3>Update Available</h3>
+                   <div className="data-modal-desc">
+                     A new version of Prayer Companion is available. Please download your data backup before updating to ensure your prayer list is safe.
+                   </div>
+                   <div style={{ 
+                     fontSize: '12px', 
+                     color: colors.accent, 
+                     background: 'rgba(184, 122, 74, 0.1)', 
+                     padding: '8px 12px', 
+                     borderRadius: '8px', 
+                     marginBottom: '12px',
+                     textAlign: 'center'
+                   }}>
+                     ⚠️ <strong>Important:</strong> Download your backup first, then click Update App.
+                   </div>
+                   <button 
+                     className="data-modal-btn data-modal-btn-download" 
+                     onClick={() => downloadData(true)}
+                     style={{ opacity: updateDownloaded ? 0.6 : 1 }}
+                   >
+                     <span>↓</span> Download Backup
+                     {updateDownloaded && <span style={{ marginLeft: '8px', fontSize: '12px' }}>✓</span>}
+                   </button>
+                   <button 
+                     className="data-modal-btn data-modal-btn-download" 
+                     onClick={handleUpdateApp}
+                     disabled={!updateDownloaded}
+                     style={{ 
+                       opacity: updateDownloaded ? 1 : 0.5,
+                       cursor: updateDownloaded ? 'pointer' : 'not-allowed',
+                       background: updateDownloaded ? colors.primaryGradient : '#ccc'
+                     }}
+                   >
+                     <span>↑</span> Update App
+                   </button>
+                   <button 
+                     className="data-modal-btn data-modal-btn-cancel" 
+                     onClick={() => { setUpdateModalOpen(false); setWaitingWorker(null); setUpdateDownloaded(false); }}
+                   >
+                     Not Now
+                   </button>
+                 </div>
+               </div>
+             )}
           </div>
         );
       };
@@ -5240,6 +5339,54 @@
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<PrayerCompanion />);
+    
+    // ============================================
+    // PWA Service Worker Registration & Update Detection
+    // ============================================
+    if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      
+      // Register service worker
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(registration => {
+          console.log('[SW] Service Worker registered:', registration);
+          
+          // Check if there's already a waiting worker on page load
+          if (registration.waiting) {
+            // Get the React component instance to call showUpdateModal
+            // We'll use a custom event to communicate with React
+            window.dispatchEvent(new CustomEvent('sw-waiting', { detail: registration.waiting }));
+          }
+          
+          // Listen for updates
+          registration.addEventListener('updatefound', () => {
+            console.log('[SW] Update found, new worker installing...');
+            const newWorker = registration.installing;
+            
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // There's a new service worker available
+                  console.log('[SW] New service worker installed and waiting');
+                  window.dispatchEvent(new CustomEvent('sw-waiting', { detail: registration.waiting || newWorker }));
+                }
+              });
+            }
+          });
+        })
+        .catch(error => {
+          console.error('[SW] Service Worker registration failed:', error);
+        });
+      
+      // Listen for controller change (when new SW takes control)
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          console.log('[SW] New service worker activated, reloading page...');
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+    }
   </script>
 </body>
 </html>
