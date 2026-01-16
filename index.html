@@ -1015,6 +1015,17 @@
     };
     const getToday = () => formatDate(new Date());
 
+    // Format date as "Tuesday 24-6-26" (Australian format with day name)
+    const getAusDateWithDay = () => {
+      const now = new Date();
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayName = days[now.getDay()];
+      const day = now.getDate();
+      const month = now.getMonth() + 1;
+      const year = String(now.getFullYear()).slice(-2);
+      return `${dayName} ${day}-${month}-${year}`;
+    };
+
     const getGreeting = (name = 'Friend') => {
       const hour = new Date().getHours();
       if (hour < 12) return `Good morning, ${name}`;
@@ -1273,6 +1284,15 @@
       const [isIOS, setIsIOS] = useState(false);
       const [isMobile, setIsMobile] = useState(false);
       
+      // Clean up cache-busting parameter from URL (added during desktop update)
+      useEffect(() => {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('_refresh')) {
+          url.searchParams.delete('_refresh');
+          window.history.replaceState({}, '', url.toString());
+        }
+      }, []);
+      
       // Detect standalone mode, iOS, and mobile on mount
       useEffect(() => {
         // Check if already running as installed PWA
@@ -1467,6 +1487,46 @@
       }, [cards, demoMode]);
       useEffect(() => { if (session) localStorage.setItem('prayerApp_session', JSON.stringify(session)); }, [session]);
 
+      // Check for midnight day change - reset session when a new day starts
+      useEffect(() => {
+        const checkForNewDay = () => {
+          // Only check if we have an active session from a previous day
+          if (session && session.dateStarted && session.dateStarted !== getToday()) {
+            console.log('[Day Change] New day detected, resetting session');
+            // Clear the session - this will show "Start Praying" for the new day
+            // The prayer history was already saved when items were checked off
+            setSession(null);
+            localStorage.removeItem('prayerApp_session');
+          }
+        };
+        
+        // Check immediately
+        checkForNewDay();
+        
+        // Check every minute
+        const intervalId = setInterval(checkForNewDay, 60000);
+        
+        // Also check when app becomes visible (user returns to app)
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === 'visible') {
+            checkForNewDay();
+          }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        // Check when window receives focus
+        const handleFocus = () => {
+          checkForNewDay();
+        };
+        window.addEventListener('focus', handleFocus);
+        
+        return () => {
+          clearInterval(intervalId);
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+          window.removeEventListener('focus', handleFocus);
+        };
+      }, [session]);
+
       // Prevent body/document scrolling - all pages should handle their own scrolling in containers
       useEffect(() => {
         // Body and html are already set to overflow: hidden in CSS
@@ -1556,26 +1616,40 @@
       const loadDemoData = () => {
         const { people: dp, cards: dc } = generateDemoData();
         setPeople(dp); setCards(dc); setSession(null);
-        localStorage.removeItem('prayerApp_session');
+        // Don't touch prayerApp_session here - it's managed separately
       };
       
       const toggleDemoMode = () => {
         if (demoMode) {
-          // Turn off demo mode - restore real user data
+          // Turn off demo mode - restore real user data AND session
           const realPeople = getStored('prayerApp_realPeople', []);
           const realCards = getStored('prayerApp_realCards', []);
+          let realSession = getStored('prayerApp_realSession', null);
+          
+          // Check if the saved real session is from a previous day - if so, clear it
+          if (realSession && realSession.dateStarted && realSession.dateStarted !== getToday()) {
+            realSession = null;
+            localStorage.removeItem('prayerApp_realSession');
+          }
+          
           setPeople(realPeople);
           setCards(realCards);
-          setSession(null);
+          setSession(realSession);
           setDemoMode(false);
           localStorage.setItem('prayerApp_demoMode', 'false');
           // Restore real data to main storage
           localStorage.setItem('prayerApp_people', JSON.stringify(realPeople));
           localStorage.setItem('prayerApp_cards', JSON.stringify(realCards));
+          if (realSession) {
+            localStorage.setItem('prayerApp_session', JSON.stringify(realSession));
+          } else {
+            localStorage.removeItem('prayerApp_session');
+          }
         } else {
-          // Turn on demo mode - save real data first, then load demo data
+          // Turn on demo mode - save real data AND session first, then load demo data
           localStorage.setItem('prayerApp_realPeople', JSON.stringify(people));
           localStorage.setItem('prayerApp_realCards', JSON.stringify(cards));
+          localStorage.setItem('prayerApp_realSession', JSON.stringify(session));
           loadDemoData();
           setDemoMode(true);
           localStorage.setItem('prayerApp_demoMode', 'true');
@@ -1637,15 +1711,15 @@
       const finalizeOnboarding = (startTutorial = false) => {
         // Apply demo mode if chosen
         if (pendingDemoChoice) {
-          // Save current (empty) real data first
+          // Save current (empty) real data and session first
           localStorage.setItem('prayerApp_realPeople', JSON.stringify(people));
           localStorage.setItem('prayerApp_realCards', JSON.stringify(cards));
+          localStorage.setItem('prayerApp_realSession', JSON.stringify(session));
           loadDemoData();
           setDemoMode(true);
           localStorage.setItem('prayerApp_demoMode', 'true');
           // Reset session so button shows "Start Praying" for fresh demo experience
           setSession(null);
-          localStorage.removeItem('prayerApp_session');
         }
         // Mark onboarding as complete
         setOnboardingComplete(true);
@@ -1756,6 +1830,10 @@
       // Legacy function for compatibility (if needed)
       const completeOnboarding = (enableDemo) => {
         if (enableDemo) {
+          // Save real data before loading demo
+          localStorage.setItem('prayerApp_realPeople', JSON.stringify(people));
+          localStorage.setItem('prayerApp_realCards', JSON.stringify(cards));
+          localStorage.setItem('prayerApp_realSession', JSON.stringify(session));
           loadDemoData();
           setDemoMode(true);
           localStorage.setItem('prayerApp_demoMode', 'true');
@@ -1832,21 +1910,39 @@
       };
       
       // Handle update button click - activate the new service worker
-      const handleUpdateApp = () => {
+      const handleUpdateApp = async () => {
         if (!isMobile) {
-          // Desktop: Hard reload with cache clear
+          // Desktop: Full cache clear, unregister service worker, and hard reload
           setUpdateModalOpen(false);
           setWaitingWorker(null);
           setUpdateDownloaded(false);
-          // Clear caches and reload
-          if ('caches' in window) {
-            caches.keys().then(names => {
-              Promise.all(names.map(name => caches.delete(name))).then(() => {
-                window.location.reload(true);
-              });
-            });
-          } else {
-            window.location.reload(true);
+          
+          try {
+            // Tell waiting worker to skip waiting first
+            if (waitingWorker) {
+              waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+            
+            // Clear all caches
+            if ('caches' in window) {
+              const names = await caches.keys();
+              await Promise.all(names.map(name => caches.delete(name)));
+            }
+            
+            // Unregister all service workers
+            if ('serviceWorker' in navigator) {
+              const registrations = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(registrations.map(reg => reg.unregister()));
+            }
+            
+            // Force hard reload by navigating to URL with cache-busting parameter
+            const url = new URL(window.location.href);
+            url.searchParams.set('_refresh', Date.now());
+            window.location.href = url.toString();
+          } catch (err) {
+            console.error('Update error:', err);
+            // Fallback: just reload
+            window.location.href = window.location.href.split('?')[0] + '?_refresh=' + Date.now();
           }
         } else if (waitingWorker) {
           // Mobile: Send message to service worker to skip waiting
@@ -3684,7 +3780,7 @@
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greetingText}</span>
                     <button className="edit-name-btn" onClick={openEditName} title="Edit name" style={{ marginLeft: '0', verticalAlign: 'middle', flexShrink: 0 }}>✎</button>
                   </div>
-                  <div className="home-subtext" style={{ ...styles.subGreeting, fontSize: '16px', marginBottom: '0' }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
+                  <div className="home-subtext" style={{ ...styles.subGreeting, fontSize: '16px', marginBottom: '0' }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for ${getAusDateWithDay()}` : 'No prayers scheduled'}</div>
                 </div>
               );
             })()}
@@ -3728,7 +3824,7 @@
                     </div>
                   </div>
                   <div style={{ flex: '1', display: 'flex', justifyContent: 'center', alignItems: 'center', paddingLeft: '24px' }}>
-                    <div style={{ fontSize: '16px', color: colors.textSecondary }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for today` : 'No prayers scheduled'}</div>
+                    <div style={{ fontSize: '16px', color: colors.textSecondary }}>{count ? `${count} prayer${count !== 1 ? 's' : ''} for ${getAusDateWithDay()}` : 'No prayers scheduled'}</div>
                   </div>
                 </div>
               );
