@@ -4161,7 +4161,7 @@
               {!allDone && <button style={styles.btnText} onClick={() => setSession(s => ({ ...s, currentView: 'flashcard' }))}>Cards</button>}
             </div>
             <div className="page-title">{allDone ? 'All prayers complete' : "Today's Prayers"}</div>
-            <div className="two-column-grid scrollable-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 6px', margin: '0 -6px', minHeight: 0 }}>
+            <div className="two-column-grid scrollable-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 6px 40px 6px', margin: '0 -6px', minHeight: 0 }}>
               {(session?.cardsInRotation || []).map(cid => <div key={cid}>{renderPrayerCard(cid, false)}</div>)}
             </div>
           </div>
@@ -4438,7 +4438,7 @@
             </div>
             
             {/* 2-column grid list */}
-            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 6px 24px 6px', margin: '0 -6px', minHeight: 0, WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 6px 40px 6px', margin: '0 -6px', minHeight: 0, WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
               {manageTab === 'people' ? renderPeopleList() : renderGroupsList()}
             </div>
           </div>
@@ -4858,7 +4858,7 @@
               if (searchTerm && !filtered.length) return <div style={styles.emptyState}>No results for "{searchTerm}"</div>;
               if (!filtered.length) return <div style={styles.emptyState}>No active people available.<br/>Unarchive people to add them to groups.</div>;
               return (
-              <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 6px', margin: '0 -6px', minHeight: 0, WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+              <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 6px 40px 6px', margin: '0 -6px', minHeight: 0, WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
                 {sortBy !== 'frequency' ? (
                   <div className="two-column-grid">
                     {filtered.map(p => { 
@@ -5598,7 +5598,7 @@
             </div>
             
             {/* 2-column grid list */}
-            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 6px 24px 6px', margin: '0 -6px', minHeight: 0, WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+            <div className="two-column-list" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 6px 40px 6px', margin: '0 -6px', minHeight: 0, WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
               {historyTab === 'people' ? renderHistoryPeopleList() : renderHistoryGroupsList()}
             </div>
           </div>
