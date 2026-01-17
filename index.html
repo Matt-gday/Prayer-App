@@ -1941,12 +1941,20 @@
             window.location.href = window.location.href.split('?')[0] + '?_refresh=' + Date.now();
           }
         } else if (waitingWorker) {
-          // Mobile: Send message to service worker to skip waiting
+          // Mobile: Send message to service worker to skip waiting, then force reload
           waitingWorker.postMessage({ type: 'SKIP_WAITING' });
           setUpdateModalOpen(false);
           setWaitingWorker(null);
           setUpdateDownloaded(false);
-          // The controllerchange event will reload the page
+          
+          // Don't rely solely on controllerchange - force reload after a brief delay
+          // This helps with iOS standalone PWAs where controllerchange may not fire reliably
+          setTimeout(() => {
+            // Force reload by navigating to a cache-busted URL
+            const url = new URL(window.location.href);
+            url.searchParams.set('_refresh', Date.now());
+            window.location.href = url.toString();
+          }, 500); // Give SW time to activate
         }
       };
       
