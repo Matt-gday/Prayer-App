@@ -1251,11 +1251,7 @@
       
       // Refs for form field navigation
       const firstNameRef = useRef(null);
-      const lastNameRef = useRef(null);
-      const organisationRef = useRef(null);
-      const prayerPointsRef = useRef(null);
       const groupNameRef = useRef(null);
-      const groupPrayerPointsRef = useRef(null);
       const [modal, setModal] = useState(null);
       const [demoMode, setDemoMode] = useState(() => getStored('prayerApp_demoMode', false));
       const [helpOpen, setHelpOpen] = useState(false);
@@ -2399,9 +2395,19 @@
       };
 
       // Get all cards in rotation (including completed ones for display)
-      const getAllCardsInRotation = () => session?.cardsInRotation || [];
+      // Filter out cards that no longer exist or have no valid content
+      const getAllCardsInRotation = () => {
+        const rotation = session?.cardsInRotation || [];
+        return rotation.filter(cid => {
+          const card = cards.find(c => c.id === cid);
+          if (!card) return false; // Card doesn't exist
+          // Check if card has any valid content (non-archived people or unnamed children)
+          const validPeople = card.peopleIds.map(id => people.find(p => p.id === id)).filter(p => p && !p.archived);
+          return validPeople.length > 0 || card.includeUnnamedChildren;
+        });
+      };
       // Get only incomplete cards for counting
-      const getIncompleteCards = () => (session?.cardsInRotation || []).filter(cid => !isCardFullyChecked(cid));
+      const getIncompleteCards = () => getAllCardsInRotation().filter(cid => !isCardFullyChecked(cid));
       const getIncompleteCount = () => getIncompleteCards().length;
       
       // Find the next incomplete card index, starting from a given index
@@ -2724,6 +2730,8 @@
         if (!card) return null;
         // Filter out archived people from the card
         const cardPeople = card.peopleIds.map(id => people.find(p => p.id === id)).filter(p => p && !p.archived);
+        // Return null if card has no valid content
+        if (cardPeople.length === 0 && !card.includeUnnamedChildren) return null;
         const adults = cardPeople.filter(p => !p.isChild), children = cardPeople.filter(p => p.isChild);
         const isSingle = cardPeople.length === 1 && !card.isGroup;
         const freq = formatFrequency(card.frequency);
@@ -4154,6 +4162,21 @@
         const allDone = incompleteCount === 0;
         const showList = session?.currentView === 'list' || allDone;
         
+        // Handle case where all cards in rotation have been invalidated (e.g., all people archived)
+        if (allCards.length === 0) {
+          return (
+            <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
+              <div className="app-header">
+                <button style={styles.btnText} onClick={() => setScreen('home')}><span style={{ display: 'inline-block', transform: 'translateY(-2px)' }}>←</span> Home</button>
+              </div>
+              <div className="page-title">No prayers available</div>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center', color: colors.textSecondary }}>
+                All prayer cards for today have been removed or archived.
+              </div>
+            </div>
+          );
+        }
+        
         if (showList) return (
           <div className="app-container" style={{ ...styles.container, display: 'flex', flexDirection: 'column', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
             <div className="app-header">
@@ -4162,12 +4185,14 @@
             </div>
             <div className="page-title">{allDone ? 'All prayers complete' : "Today's Prayers"}</div>
             <div className="two-column-grid scrollable-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 6px 40px 6px', margin: '0 -6px', minHeight: 0 }}>
-              {(session?.cardsInRotation || []).map(cid => <div key={cid}>{renderPrayerCard(cid, false)}</div>)}
+              {allCards.map(cid => <div key={cid}>{renderPrayerCard(cid, false)}</div>)}
             </div>
           </div>
         );
         
-        const cid = allCards[currentCardIndex % allCards.length];
+        // Ensure currentCardIndex is within bounds
+        const safeIndex = allCards.length > 0 ? currentCardIndex % allCards.length : 0;
+        const cid = allCards[safeIndex];
         const currentCardComplete = isCardFullyChecked(cid);
         const isLastIncomplete = incompleteCount === 1 && !currentCardComplete;
         const onlyOneCardTotal = allCards.length === 1;
@@ -4491,36 +4516,27 @@
               style={styles.input} 
               value={personForm.firstName} 
               onChange={e => setPersonForm({ ...personForm, firstName: e.target.value })} 
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); lastNameRef.current?.focus(); } }}
-              enterKeyHint="next"
               autoCapitalize="words"
               placeholder="First name" 
             />
             <label style={styles.label}>Last Name</label>
             <input 
-              ref={lastNameRef}
               style={styles.input} 
               value={personForm.lastName} 
               onChange={e => setPersonForm({ ...personForm, lastName: e.target.value })} 
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); organisationRef.current?.focus(); } }}
-              enterKeyHint="next"
               autoCapitalize="words"
               placeholder="Last name" 
             />
             <label style={styles.label}>Organisation / Ministry</label>
             <input 
-              ref={organisationRef}
               style={styles.input} 
               value={personForm.organisation} 
               onChange={e => setPersonForm({ ...personForm, organisation: e.target.value })} 
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); prayerPointsRef.current?.focus(); } }}
-              enterKeyHint="next"
               autoCapitalize="words"
               placeholder="Optional - e.g. OMF, City Youth" 
             />
             <label style={styles.label}>Prayer Points</label>
             <textarea 
-              ref={prayerPointsRef}
               style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }} 
               value={personForm.prayerPoint} 
               onChange={e => setPersonForm({ ...personForm, prayerPoint: e.target.value })} 
@@ -4920,8 +4936,6 @@
                 style={styles.input} 
                 value={groupForm.name} 
                 onChange={e => setGroupForm({ ...groupForm, name: e.target.value })} 
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); groupPrayerPointsRef.current?.focus(); } }}
-                enterKeyHint="next"
                 autoCapitalize="words"
                 placeholder="e.g. Smiths" 
               />
@@ -4947,7 +4961,6 @@
               </div>
               <label style={styles.label}>Prayer Points</label>
               <textarea 
-                ref={groupPrayerPointsRef}
                 style={{ ...styles.input, minHeight: '60px', resize: 'vertical' }} 
                 value={groupForm.prayerPoint} 
                 onChange={e => setGroupForm({ ...groupForm, prayerPoint: e.target.value })} 
