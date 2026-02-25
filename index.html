@@ -1586,27 +1586,32 @@
       useEffect(() => {
         if (!session || session.dateStarted !== getToday()) return;
         
-        // Find cards that are due today but not in the current rotation
         const currentRotation = session.cardsInRotation || [];
-        const currentTodaysList = session.todaysList || [];
         
-        // Check each active card to see if it should be added
+        // Remove archived/dissolved cards from session
+        const archivedInRotation = currentRotation.filter(cid => {
+          const c = cards.find(x => x.id === cid);
+          return c && (c.archived || !c.active);
+        });
+        
+        // Find cards that are due today but not in the current rotation
         const cardsToAdd = cards.filter(c => {
-          if (!c.active) return false;
-          if (currentRotation.includes(c.id)) return false; // Already in rotation
+          if (!c.active || c.archived) return false;
+          if (currentRotation.includes(c.id)) return false;
+          // Skip cards created today from a split/dissolve (already prayed via their old group)
+          if (c.firstPrayerCompleted && c.dateCreated === getToday()) return false;
           
-          // Check if card is due today (simplified check for daily cards or new cards)
           if (c.frequency === 'daily') return true;
-          if (!c.firstPrayerCompleted) return true; // New card never prayed for
+          if (!c.firstPrayerCompleted) return true;
           
           return false;
         }).map(c => c.id);
         
-        if (cardsToAdd.length > 0) {
+        if (archivedInRotation.length > 0 || cardsToAdd.length > 0) {
           setSession(prev => ({
             ...prev,
-            cardsInRotation: [...prev.cardsInRotation, ...cardsToAdd],
-            todaysList: [...prev.todaysList, ...cardsToAdd]
+            todaysList: [...prev.todaysList.filter(id => !archivedInRotation.includes(id)), ...cardsToAdd],
+            cardsInRotation: [...prev.cardsInRotation.filter(id => !archivedInRotation.includes(id)), ...cardsToAdd]
           }));
         }
       }, [cards, session?.dateStarted]);
@@ -2505,6 +2510,37 @@
         }
       }, [session?.cardsInRotation]);
 
+      // Screen Wake Lock — keep screen on during prayer sessions
+      const wakeLockRef = useRef(null);
+      useEffect(() => {
+        const requestWakeLock = async () => {
+          try {
+            if ('wakeLock' in navigator) {
+              wakeLockRef.current = await navigator.wakeLock.request('screen');
+              wakeLockRef.current.addEventListener('release', () => { wakeLockRef.current = null; });
+            }
+          } catch (e) { /* Wake lock not available or denied */ }
+        };
+        const releaseWakeLock = () => {
+          if (wakeLockRef.current) {
+            wakeLockRef.current.release();
+            wakeLockRef.current = null;
+          }
+        };
+        if (screen === 'prayer') {
+          requestWakeLock();
+          const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && screen === 'prayer') requestWakeLock();
+          };
+          document.addEventListener('visibilitychange', handleVisibilityChange);
+          return () => {
+            releaseWakeLock();
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+          };
+        }
+        return releaseWakeLock;
+      }, [screen]);
+
       const addPerson = (data) => {
         const isOrg = !data.firstName && !data.lastName && data.organisation;
         const displayName = isOrg ? data.organisation : `${data.firstName} ${data.lastName}`.trim();
@@ -2570,6 +2606,14 @@
         });
         // Archive the group instead of deleting it (preserves prayer history)
         setCards(prev => prev.map(c => c.id === cid ? { ...c, archived: true, archivedDate: getToday(), dissolved: true } : c));
+        // Remove dissolved group from current prayer session
+        if (session && session.dateStarted === getToday()) {
+          setSession(prev => prev ? {
+            ...prev,
+            todaysList: prev.todaysList.filter(id => id !== cid),
+            cardsInRotation: prev.cardsInRotation.filter(id => id !== cid)
+          } : null);
+        }
       };
       
       const removeFromGroup = (cardId, personId) => {
@@ -2595,11 +2639,11 @@
         
         if (updatedPeopleIds.length <= 1) {
           setCards(prev => {
-            const withoutOld = prev.filter(c => c.id !== cardId);
+            const archived = prev.map(c => c.id === cardId ? { ...c, archived: true, archivedDate: getToday(), dissolved: true } : c);
             const remainingPersonId = updatedPeopleIds[0];
             const remainingPerson = people.find(p => p.id === remainingPersonId);
             if (remainingPerson) {
-              return [...withoutOld, newCard, {
+              return [...archived, newCard, {
                 id: generateId(),
                 name: `${remainingPerson.firstName} ${remainingPerson.lastName}`.trim() || remainingPerson.organisation,
                 peopleIds: [remainingPersonId],
@@ -2612,8 +2656,16 @@
                 firstPrayerCompleted: true
               }];
             }
-            return [...withoutOld, newCard];
+            return [...archived, newCard];
           });
+          // Remove dissolved group from current prayer session
+          if (session && session.dateStarted === getToday()) {
+            setSession(prev => prev ? {
+              ...prev,
+              todaysList: prev.todaysList.filter(id => id !== cardId),
+              cardsInRotation: prev.cardsInRotation.filter(id => id !== cardId)
+            } : null);
+          }
           setEditingCard(null);
         } else {
           setCards(prev => prev.map(c => c.id === cardId ? { ...c, peopleIds: updatedPeopleIds } : c).concat(newCard));
