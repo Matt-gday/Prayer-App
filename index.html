@@ -2216,7 +2216,7 @@
       const getLastPrayedDate = useCallback((card) => {
         const cp = card.peopleIds.map(id => people.find(p => p.id === id)).filter(Boolean);
         if (!cp.length) return null;
-        const dates = cp.flatMap(p => p.prayerHistory || []);
+        const dates = cp.flatMap(p => (p.prayerHistory || []).map(h => typeof h === 'string' ? h : h.date)).filter(Boolean);
         return dates.length ? dates.sort().reverse()[0] : null;
       }, [people]);
       const daysSinceLastPrayer = useCallback((card) => {
