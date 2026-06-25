@@ -1,7 +1,7 @@
 // Service Worker for Prayer Companion PWA
 // Update CACHE_NAME when you make changes to the app to force cache refresh
 // Increment the version number (v1, v2, v3, etc.) each time you deploy updates
-const CACHE_NAME = 'prayer-companion-v27';
+const CACHE_NAME = 'prayer-companion-v28';
 const URLS_TO_CACHE = [
   './',
   './index.html'
@@ -16,7 +16,8 @@ self.addEventListener('install', event => {
       return cache.addAll(URLS_TO_CACHE);
     })
   );
-  // Do NOT call skipWaiting() here - wait for user to explicitly update via message
+  // Activate updated worker immediately so stale app shell is replaced quickly.
+  self.skipWaiting();
 });
 
 // Activate event - clean up old caches
@@ -41,6 +42,20 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', event => {
+  // Always prefer fresh HTML for app shell navigations to avoid stale blank-page deployments.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put('./index.html', responseClone));
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(response => {
       // Return cached version or fetch from network
